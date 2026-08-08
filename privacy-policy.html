@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Privacy policy for the Unofficial WWM Calculator Data Patch browser extension.">
+  <title>Privacy Policy &mdash; Unofficial WWM Calculator Data Patch</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+      font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    h1, h2 { line-height: 1.25; }
+    h1 { margin-bottom: 0.25rem; }
+    .effective-date { margin-top: 0; color: #707080; }
+    code { overflow-wrap: anywhere; }
+    footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid #8886; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Privacy Policy &mdash; Unofficial WWM Calculator Data Patch</h1>
+    <p class="effective-date">Effective date: August 7, 2026</p>
+
+    <p>The extension does not collect, transmit, sell, or share personal data, browsing history, authentication information, communications, or analytics.</p>
+
+    <p>The extension operates only on <code>https://wherewindsmath.pages.dev/</code>. It locally reads and modifies the calculator's JavaScript responses to apply user-configured gear levels and skill coefficients. These responses and their contents are not transmitted to the developer or any third party.</p>
+
+    <p>Configuration entered by the user is stored only in the browser's extension-local storage. The extension has no developer-operated server, telemetry, advertising, subscription, login, or cloud-sync service. Removing the extension deletes its locally stored configuration according to the browser's normal extension-data behavior.</p>
+
+    <p>The Chrome version uses the Debugger API only after the user selects <strong>Enable WWM Patch</strong>, and only for the active Where Winds Math calculator tab. It uses that API to intercept and locally modify the calculator's relevant JavaScript resources. It does not inspect other tabs or transmit intercepted content.</p>
+
+    <h2>Permission explanations</h2>
+    <ul>
+      <li><strong>Storage:</strong> saves the user's patch configuration locally in the browser.</li>
+      <li><strong>Host access to <code>wherewindsmath.pages.dev</code>:</strong> restricts the patch to the calculator website.</li>
+      <li><strong>Firefox Web Request and Web Request Blocking:</strong> intercept the calculator's relevant script responses so the configured data can be applied locally.</li>
+      <li><strong>Chrome Debugger:</strong> intercepts and locally modifies the calculator's relevant script responses after the user explicitly enables the patch for that tab.</li>
+    </ul>
+
+    <p>This is an unofficial community utility and is not affiliated with or endorsed by the calculator website or the game publisher.</p>
+  </main>
+
+  <footer>
+    Questions about this policy can be submitted through the
+    <a href="https://github.com/Ginebra-cazador/WWMath-Add-on/issues">GitHub Issues page</a>.
+  </footer>
+</body>
+</html>
