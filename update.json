@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "latest": {
     "firefox": {
-      "version": "3.3.16",
-      "releaseUrl": "https://github.com/Ginebra-cazador/WWMath-Add-on/releases/latest"
+      "version": "3.3.17",
+      "releaseUrl": "https://github.com/Ginebra-cazador/WWMath-Add-on/releases/tag/v2026.08.09-notification-test"
     },
     "chrome": {
-      "version": "2.3.16",
-      "releaseUrl": "https://github.com/Ginebra-cazador/WWMath-Add-on/releases/latest"
+      "version": "2.3.17",
+      "releaseUrl": "https://github.com/Ginebra-cazador/WWMath-Add-on/releases/tag/v2026.08.09-notification-test"
     }
   }
 }
