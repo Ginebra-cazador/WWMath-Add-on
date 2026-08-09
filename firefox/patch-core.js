@@ -231,9 +231,23 @@ globalThis.WWMPatchCore = (() => {
     return patchInnerWays(patchArmorSets(patchBowSet(patchArsenal(patched,config,selectedProfile),config),config),table);
   }
 
+  function patchGearAttuneLevel(source) {
+    const functionPattern = /function\s+[\w$]+\(\{mainStats:[\w$]+,attunements:[\w$]+,gearPiece:([\w$]+),slotKey:([\w$]+),specId:([\w$]+),calculateDps:[\w$]+,cachedCurrentDps:[\w$]+=null\}\)\{/g;
+    const candidates = [...source.matchAll(functionPattern)].map(match => {
+      const gearPiece = match[1], slotKey = match[2], specId = match[3];
+      const start = match.index, end = Math.min(source.length, start + 7500);
+      const section = source.slice(start, end);
+      const callPattern = new RegExp(`([\\w$]+)\\(${slotKey},${specId}\\)`, 'g');
+      return { gearPiece, slotKey, specId, start, end, section, callPattern, calls: [...section.matchAll(callPattern)] };
+    }).filter(candidate => candidate.calls.length === 1);
+    if (candidates.length !== 1) throw new Error(`Gear Re-Attune table call: found ${candidates.length} candidate functions, expected 1`);
+    const { gearPiece, slotKey, specId, start, end, section, callPattern } = candidates[0];
+    return source.slice(0, start) + section.replace(callPattern, `$1(${slotKey},${specId},${gearPiece}['level'])`) + source.slice(end);
+  }
+
   function patchApp(source, config, profileId) {
     const selected = profile(config, profileId).data;
-    return patchTuning(patchArsenal(patchArmorSets(patchBowSet(patchEnemyLevels(patchGear(source, config), config),config),config),config,selected), config, selected);
+    return patchGearAttuneLevel(patchTuning(patchArsenal(patchArmorSets(patchBowSet(patchEnemyLevels(patchGear(source, config), config),config),config),config,selected), config, selected));
   }
 
   return { normalize, profile, patchApp, patchWorker };

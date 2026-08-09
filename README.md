@@ -8,8 +8,8 @@ The extension adds configurable gear levels (currently Level 96) and updated Sto
 
 Use the ZIP files attached to the latest entry on the repository's **Releases** page:
 
-- `Unofficial-WWM-Patch-Firefox-v3.3.8.zip`
-- `Unofficial-WWM-Patch-Chrome-v2.3.8.zip`
+- `Unofficial-WWM-Patch-Firefox-v3.3.15.zip`
+- `Unofficial-WWM-Patch-Chrome-v2.3.15.zip`
 
 The `firefox/` and `chrome/` folders contain the matching readable source code.
 

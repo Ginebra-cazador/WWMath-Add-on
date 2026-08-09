@@ -1,4 +1,4 @@
-# Chrome installation (v2.3.8)
+# Chrome installation (v2.3.15)
 
 1. Extract the ZIP to a permanent folder.
 2. Open `chrome://extensions`.
