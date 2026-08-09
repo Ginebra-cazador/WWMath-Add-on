@@ -16,6 +16,7 @@ const fixedApp = context.WWMPatchCore.patchApp(app, config, 'fixed-100');
 const fixedWorker = context.WWMPatchCore.patchWorker(worker, config, config.levels.playerProfiles['fixed-100']);
 if (!fixedApp.includes("['96']={\"legendary\":{\"minPhys\":65,\"maxPhys\":151}")) throw new Error('Level 96 gear was not injected.');
 if (!/var\s+[\w$]+=0\.06,[\w$]+=\['leftWeapon'/.test(fixedApp)) throw new Error('Fixed attunement cap is not 6%.');
+if (!/\([\w$]+,[\w$]+,[\w$]+\['level'\]\)/.test(fixedApp)) throw new Error('Gear level is not forwarded to the Re-Attune table lookup.');
 if (!fixedWorker.includes("'physCoeff':7.2368,'flatPhys':2002")) throw new Error('Fixed coefficients were not applied.');
 if (!fixedWorker.includes("'exquisiteScenery':{0xd:{'crit':0.063},0xe:{'crit':0.074},0xf:{'crit':0.086}")) throw new Error('Updated Exquisite Scenery value was not applied.');
 if (!fixedWorker.includes("'battleAnthem':{0xd:{'affinity':0.028},0xe:{'affinity':0.033},0xf:{'affinity':0.039}")) throw new Error('Updated Battle Anthem value was not applied.');
