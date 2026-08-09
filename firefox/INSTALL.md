@@ -1,4 +1,4 @@
-# Temporary Firefox installation (v3.3.15)
+# Temporary Firefox installation (v3.3.16)
 
 1. Disable older Tampermonkey patches and remove the previous temporary add-on.
 2. Open `about:debugging#/runtime/this-firefox`.

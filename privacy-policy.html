@@ -23,11 +23,13 @@
 <body>
   <main>
     <h1>Privacy Policy &mdash; Unofficial WWM Calculator Data Patch</h1>
-    <p class="effective-date">Effective date: August 7, 2026</p>
+    <p class="effective-date">Effective date: August 9, 2026</p>
 
     <p>The extension does not collect, transmit, sell, or share personal data, browsing history, authentication information, communications, or analytics.</p>
 
     <p>The extension operates only on <code>https://wherewindsmath.pages.dev/</code>. It locally reads and modifies the calculator's JavaScript responses to apply user-configured gear levels and skill coefficients. These responses and their contents are not transmitted to the developer or any third party.</p>
+
+    <p>At most once every 24 hours, the extension requests the public <code>update.json</code> file from <code>raw.githubusercontent.com</code> to determine whether a newer browser-specific version is available. The response contains only version numbers and a GitHub release link. The extension does not send configuration, calculator content, browsing history, or other user data with this request, and it never downloads or executes remote code. As with any normal web request, GitHub may receive standard connection information such as the user's IP address and user agent under GitHub's own privacy policy.</p>
 
     <p>Configuration entered by the user is stored only in the browser's extension-local storage. The extension has no developer-operated server, telemetry, advertising, subscription, login, or cloud-sync service. Removing the extension deletes its locally stored configuration according to the browser's normal extension-data behavior.</p>
 
@@ -37,6 +39,7 @@
     <ul>
       <li><strong>Storage:</strong> saves the user's patch configuration locally in the browser.</li>
       <li><strong>Host access to <code>wherewindsmath.pages.dev</code>:</strong> restricts the patch to the calculator website.</li>
+      <li><strong>Host access to <code>raw.githubusercontent.com/Ginebra-cazador/WWMath-Add-on</code>:</strong> reads the static update metadata file at most once every 24 hours.</li>
       <li><strong>Firefox Web Request and Web Request Blocking:</strong> intercept the calculator's relevant script responses so the configured data can be applied locally.</li>
       <li><strong>Chrome Debugger:</strong> intercepts and locally modifies the calculator's relevant script responses after the user explicitly enables the patch for that tab.</li>
     </ul>

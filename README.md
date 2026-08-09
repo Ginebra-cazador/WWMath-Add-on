@@ -4,12 +4,14 @@ This repository contains the Firefox and Chrome editions of an unofficial, local
 
 The extension adds configurable gear levels (currently Level 96) and updated Stonesplit Might skill coefficients. It has no Discord login, subscription check, analytics, advertising, or cloud-sharing service. Configuration stays in the browser's extension-local storage.
 
+Once per day, the extension may read the repository's static `update.json` file from GitHub. When a newer browser-specific version is listed, it displays a link to the GitHub release; installation remains manual.
+
 ## Downloads
 
 Use the ZIP files attached to the latest entry on the repository's **Releases** page:
 
-- `Unofficial-WWM-Patch-Firefox-v3.3.15.zip`
-- `Unofficial-WWM-Patch-Chrome-v2.3.15.zip`
+- `Unofficial-WWM-Patch-Firefox-v3.3.16.zip`
+- `Unofficial-WWM-Patch-Chrome-v2.3.16.zip`
 
 The `firefox/` and `chrome/` folders contain the matching readable source code.
 
