@@ -43,7 +43,9 @@ Chrome displays its standard debugging banner while response interception is act
 
 ## Using the patch
 
-After activation, import your profile and choose **Lv.100 (Fixed)** in Settings > Player Level. The website's native **Lv.100** option preserves the calculator developer's original data. Fixed applies the verified Stonesplit coefficients and changes every skill entry marked `(attune)` from the original 5% cap to the confirmed 6% cap (3.6%-6% range).
+After activation, import your profile, then open the calculator website's **Settings** tab—the tab immediately next to **Profile**. Use **Player Level** and **Enemy Level** there to change the levels used by the live calculation. Enable **Show other enemy levels** when you need to select an enemy level other than the website's default.
+
+Choose **Lv.100 (Fixed)** under **Player Level** to use the verified Stonesplit coefficients and the confirmed 6% cap (3.6%-6% range) for every skill entry marked `(attune)`. The website's native **Lv.100** option preserves the calculator developer's original data. These live selections belong to the website's Settings page; Patch Settings is used to edit or add the data tables that supply those choices.
 
 Level 96 gear remains available. For a Legendary Level 96 weapon, the base line should display `Min Phys +65, Max Phys +151`, and those base values should contribute to Character Stats and DPS.
 
