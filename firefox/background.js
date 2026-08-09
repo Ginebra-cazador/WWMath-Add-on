@@ -1,15 +1,15 @@
 'use strict';
 
 let activeConfig = WWMPatchCore.normalize(globalThis.WWM_DEFAULT_CONFIG);
-let activeProfile = activeConfig.levels.defaultPlayerProfile;
+let activeProfile = null;
 const ready = browser.storage.local.get(['wwmConfig','wwmRuntime']).then(result => {
   activeConfig = WWMPatchCore.normalize(result.wwmConfig);
-  activeProfile = result.wwmRuntime?.playerProfile || activeConfig.levels.defaultPlayerProfile;
+  activeProfile = result.wwmRuntime?.playerProfile ?? null;
 });
 
 browser.storage.onChanged.addListener(changes => {
   if (changes.wwmConfig) activeConfig = WWMPatchCore.normalize(changes.wwmConfig.newValue);
-  if (changes.wwmRuntime) activeProfile = changes.wwmRuntime.newValue?.playerProfile || activeConfig.levels.defaultPlayerProfile;
+  if (changes.wwmRuntime) activeProfile = changes.wwmRuntime.newValue?.playerProfile ?? null;
 });
 
 browser.runtime.onMessage.addListener(async message => {

@@ -10,8 +10,8 @@ Once per day, the extension may read the repository's static `update.json` file 
 
 Use the ZIP files attached to the latest entry on the repository's **Releases** page:
 
-- `Unofficial-WWM-Patch-Firefox-v3.3.16.zip`
-- `Unofficial-WWM-Patch-Chrome-v2.3.16.zip`
+- `Unofficial-WWM-Patch-Firefox-v3.3.17.zip`
+- `Unofficial-WWM-Patch-Chrome-v2.3.17.zip`
 
 The `firefox/` and `chrome/` folders contain the matching readable source code.
 
@@ -36,7 +36,7 @@ Temporary add-ons are removed when Firefox closes. Install the signed Mozilla Ad
 3. Enable **Developer mode**.
 4. Select **Load unpacked** and choose the extracted folder.
 5. Open the Where Winds Math calculator.
-6. Select **Enable WWM Patch** at the lower-right of the page.
+6. Select **WWM Patch: OFF - Click to Enable** at the lower-right of the page.
 7. Accept Chrome's debugging notice and allow the automatic reload.
 
 Chrome displays its standard debugging banner while response interception is active. Closing the calculator tab ends that session; enable the patch again in a new tab.
@@ -80,6 +80,9 @@ To add a future player level such as 105, add a profile under `levels.playerProf
 - Skill identifiers and the verified app version are read-only in user-friendly mode; guided controls can copy known skills and Inner Ways into another Martial Arts table.
 - The guided Add Skill and Add Inner Way dialogs can also create a new locked identifier from an existing data template.
 - Per-slot gear-level display memory keeps added levels selected when the calculator redraws its original 71–91-only selector markup.
+- Website Settings remains the sole owner of active Player and Enemy level selections; native levels are no longer forced back to the corrected profile.
+- User-friendly configuration edits now update the correct underlying JSON section immediately, including dropdown changes.
+- Guarded enemy-level synchronization repairs a visible/internal level mismatch without repeatedly overriding the website setting.
 
 Enemy Level 96 defense (`405`) and resistance (`65%`) remain separate from the player's gear level. Attribute damage is configured as zero for the current Stonesplit rotation data.
 
