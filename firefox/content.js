@@ -2,12 +2,13 @@
 
 const ext = globalThis.browser || globalThis.chrome;
 let config = globalThis.WWM_DEFAULT_CONFIG;
-let runtime = { playerProfile: config.levels.defaultPlayerProfile };
+let runtime = { playerProfile: null };
 let restoring = false;
 let pendingGearLevel = null;
 let pendingGearUntil = 0;
 let compatibility = null;
 let gearLevelMemory = {};
+const attemptedEnemySynchronizations = new Set();
 try { gearLevelMemory=JSON.parse(sessionStorage.getItem('wwmGearLevelMemory')||'{}'); } catch (_) {}
 
 function gearSlotKey(select) {
@@ -45,6 +46,22 @@ function isEnemySelect(select) {
   return rowLabel(select).includes('enemy level') || [...select.options].some(x => /def:|jr:/i.test(x.textContent));
 }
 
+function synchronizeEnemySelect(select) {
+  if (!select.isConnected || !select.value) return;
+  let container = select.parentElement;
+  for (let depth = 0; container && depth < 6; depth++, container = container.parentElement) {
+    const match = (container.textContent || '').match(/Empty\s*=\s*use\s*Lv\.?\s*(\d+)/i);
+    if (!match) continue;
+    const displayedLevel = Number(select.value), internalLevel = Number(match[1]);
+    if (displayedLevel === internalLevel) return;
+    const signature = `${displayedLevel}:${internalLevel}`;
+    if (attemptedEnemySynchronizations.has(signature)) return;
+    attemptedEnemySynchronizations.add(signature);
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+}
+
 function addOption(select, value, label) {
   let option = [...select.options].find(x => x.value === value);
   if (!option) { option = new Option(label, value); select.add(option); }
@@ -63,11 +80,13 @@ function expose(root = document) {
     }
     if (isPlayerSelect(select)) {
       for (const [id, data] of Object.entries(config.levels.playerProfiles || {})) addOption(select, `wwm:${id}`, data.label);
-      const wanted = `wwm:${runtime.playerProfile}`;
-      if (!restoring && [...select.options].some(x => x.value === wanted)) select.value = wanted;
+      const wanted = runtime.playerProfile ? `wwm:${runtime.playerProfile}` : null;
+      if (!restoring && wanted && [...select.options].some(x => x.value === wanted)) select.value = wanted;
     }
     if (isEnemySelect(select)) {
       for (const data of Object.values(config.levels.enemyLevels || {})) addOption(select, String(data.level), data.label);
+      setTimeout(() => synchronizeEnemySelect(select), 0);
+      setTimeout(() => synchronizeEnemySelect(select), 500);
     }
   }
 }
@@ -83,12 +102,17 @@ document.addEventListener('change', async event => {
     return;
   }
   if (!isPlayerSelect(select) || restoring) return;
-  if (!select.value.startsWith('wwm:')) return;
+  if (!select.value.startsWith('wwm:')) {
+    runtime = { ...runtime, playerProfile: null, nativePlayerLevel: Number(select.value) || null };
+    await ext.storage.local.set({ wwmRuntime: runtime });
+    setTimeout(() => location.reload(), 100);
+    return;
+  }
   event.stopImmediatePropagation();
   const id = select.value.slice(4);
   const selected = config.levels.playerProfiles[id];
   if (!selected) return;
-  runtime.playerProfile = id;
+  runtime = { ...runtime, playerProfile: id, nativePlayerLevel: null };
   await ext.storage.local.set({ wwmRuntime: runtime });
   restoring = true;
   if (![...select.options].some(x => x.value === String(selected.level))) {
@@ -103,7 +127,7 @@ document.addEventListener('change', async event => {
 
 ext.storage.local.get(['wwmConfig','wwmRuntime','wwmCompatibility']).then(result => {
   if (result.wwmConfig?.schemaVersion === 3) config = result.wwmConfig;
-  runtime = result.wwmRuntime || { playerProfile: config.levels.defaultPlayerProfile };
+  runtime = result.wwmRuntime || { playerProfile: null };
   compatibility = result.wwmCompatibility || null;
   expose();
   renderCompatibility();

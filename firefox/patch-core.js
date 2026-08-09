@@ -28,6 +28,7 @@ globalThis.WWMPatchCore = (() => {
   }
 
   function profile(config, profileId) {
+    if (profileId === null) return { id: null, data: null };
     const id = profileId && config.levels.playerProfiles[profileId] ? profileId : config.levels.defaultPlayerProfile;
     return { id, data: config.levels.playerProfiles[id] };
   }

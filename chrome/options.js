@@ -38,28 +38,29 @@ function groupTitle(key, value) {
   if (value && typeof value === 'object' && value.name) return `${value.name}${Number.isInteger(value.expected) ? ` — Expected: ${value.expected}` : ''}`;
   return humanize(key);
 }
-function renderNode(container, value, path = []) {
+function renderNode(container, value, path = [], editRoot = draft) {
   if (path.length === 1 && value?.maxRolls && value?.attunementRange) {
-    if (Object.hasOwn(value,'sourceBracket')) renderNode(container,{sourceBracket:value.sourceBracket},path);
+    if (Object.hasOwn(value,'sourceBracket')) renderNode(container,{sourceBracket:value.sourceBracket},path,editRoot);
     const tuningDetails=document.createElement('details');
     const tuningSummary=document.createElement('summary'); tuningSummary.textContent='Max Rolls';
-    const tuningChildren=document.createElement('div'); tuningChildren.className='children'; renderNode(tuningChildren,value.maxRolls,[...path,'maxRolls']);
+    const tuningChildren=document.createElement('div'); tuningChildren.className='children'; renderNode(tuningChildren,value.maxRolls,[...path,'maxRolls'],editRoot);
     tuningDetails.append(tuningSummary,tuningChildren); container.appendChild(tuningDetails);
     return;
   }
   for (const [key, child] of Object.entries(value)) {
+    if (path.length === 0 && (key === 'defaultPlayerProfile' || key === 'defaultEnemyLevel')) continue;
     if (key === 'namedStatRules' || key === 'patches' || key === 'from') continue;
     if (path.includes('innerWayRules') && (key === 'name' || key === 'key')) continue;
     if (path.includes('coefficientRules') && (key === 'name' || key === 'skillName')) continue;
     const childPath = [...path, key];
     if (child && typeof child === 'object') {
-      if (key === 'to' && path.includes('innerWayRules')) { renderNode(container,child,childPath); continue; }
+      if (key === 'to' && path.includes('innerWayRules')) { renderNode(container,child,childPath,editRoot); continue; }
       const details=document.createElement('details');
       const heading=document.createElement('summary');
       heading.textContent=Array.isArray(value) ? `${Number(key)+1}. ${groupTitle(key,child)}` : (child.weapon&&Object.hasOwn(child,'relayEligible') ? `Lvl ${key} Gear` : groupTitle(key,child));
       const children=document.createElement('div'); children.className='children';
       details.append(heading,children); container.appendChild(details);
-      renderNode(children, child, childPath);
+      renderNode(children, child, childPath,editRoot);
       continue;
     }
     const row = document.createElement('div'); row.className = 'field';
@@ -72,11 +73,7 @@ function renderNode(container, value, path = []) {
       for (const id of choices) input.add(new Option(id,id));
       input.value=child || '';
     } else if (typeof child === 'boolean') { input=document.createElement('input'); input.type='checkbox'; input.checked=child; }
-    else if (path.join('.') === '' && key === 'defaultPlayerProfile') {
-      input=document.createElement('select');
-      for (const [id,p] of Object.entries(draft.levels.playerProfiles)) input.add(new Option(p.label,id));
-      input.value=child;
-    } else { input=document.createElement('input'); input.type=typeof child === 'number' ? 'number' : 'text'; if (typeof child === 'number') input.step='any'; input.value=child === null ? 'Null' : child; if (child === null) { input.disabled=true; input.title='This value is intentionally null and is not used by the calculator.'; } }
+    else { input=document.createElement('input'); input.type=typeof child === 'number' ? 'number' : 'text'; if (typeof child === 'number') input.step='any'; input.value=child === null ? 'Null' : child; if (child === null) { input.disabled=true; input.title='This value is intentionally null and is not used by the calculator.'; } }
     if (path.includes('from') || key === 'expected') {
       input.disabled=true;
       input.title='Compatibility value from the original calculator. Edit only in Advanced JSON mode.';
@@ -85,14 +82,16 @@ function renderNode(container, value, path = []) {
       input.disabled=true;
       input.title='This identifies the calculator bundle version verified by this extension release.';
     }
-    input.addEventListener('input', () => {
+    const updateValue = () => {
       let next;
       if (typeof child === 'boolean') next=input.checked;
       else if (typeof child === 'number') next=input.value === '' ? 0 : Number(input.value);
       else if (child === null) next=input.value === '' ? null : (['tuningTable','coefficientTable','arsenalTable'].includes(key) ? input.value : Number(input.value));
       else next=input.value;
-      setAt(draft, childPath, next);
-    });
+      setAt(editRoot, childPath, next);
+    };
+    input.addEventListener('input', updateValue);
+    input.addEventListener('change', updateValue);
     row.append(label,input); container.appendChild(row);
   }
 }
@@ -170,7 +169,7 @@ function addActions(section,container) {
   if (section==='baseGearStats') actions.append(action('+ Add base gear level',()=>{ const id=askId('New gear level, for example 101:',draft.baseGearStats); if(!id)return; if(!/^\d+$/.test(id))return alert('Use a whole-number gear level.'); const source=chooseSource('gear level',draft.baseGearStats); if(source===false)return; draft.baseGearStats[id]=source?clone(draft.baseGearStats[source]):{relayEligible:false,weapon:{legendary:{},epic:{}},pendant:{legendary:{},epic:{}},disc:{legendary:{},epic:{}},lightArmor:{legendary:{},epic:{}},greaves:{legendary:{},epic:{}},chest:{legendary:{},epic:{}},bowSet:{precision:0,crit:0,affinity:0},armorSets:{rainwhisper:0,ivorybloom:0,hawkwing:0,shatteredridge:0}}; renderFriendly(); }));
   if (actions.childElementCount) container.appendChild(actions);
 }
-function renderFriendly() { for (const [key,container] of Object.entries(friendly)) { container.replaceChildren(); addActions(key,container); renderNode(container,draft[key]); } }
+function renderFriendly() { for (const [key,container] of Object.entries(friendly)) { container.replaceChildren(); addActions(key,container); renderNode(container,draft[key],[],draft[key]); } }
 function writeJson() { for (const [key,field] of Object.entries(fields)) field.value=JSON.stringify(draft[key],null,2); }
 function readJson() { const next={schemaVersion:3}; for (const [key,field] of Object.entries(fields)) next[key]=JSON.parse(field.value); draft=next; }
 function show(config) { draft=clone(config); writeJson(); renderFriendly(); }
@@ -216,7 +215,7 @@ document.getElementById('export').onclick=()=>{ try { if(mode==='json')readJson(
 document.getElementById('import').onclick=()=>document.getElementById('import-file').click();
 document.getElementById('import-file').onchange=async event=>{ try { const file=event.target.files[0]; if(!file)return; const imported=normalizeConfig(JSON.parse(await file.text())); validate(imported); show(imported); status.textContent='Imported for review. Select Review and save to apply it.'; } catch(error){status.textContent=`Not imported: ${error.message}`;} finally{event.target.value='';} };
 document.getElementById('rollback').onclick=async()=>{ const stored=await ext.storage.local.get(['wwmConfig','wwmConfigBackup']); if(!stored.wwmConfigBackup){status.textContent='No previous save is available.';return;} if(!confirm('Restore the configuration from before the last save?'))return; await ext.storage.local.set({wwmConfigBackup:stored.wwmConfig||savedConfig,wwmConfig:stored.wwmConfigBackup}); savedConfig=clone(stored.wwmConfigBackup); show(savedConfig); status.textContent='Previous configuration restored. Reload the calculator.'; };
-document.getElementById('reset').onclick=async()=>{ const config=clone(globalThis.WWM_DEFAULT_CONFIG); await ext.storage.local.set({wwmConfigBackup:savedConfig,wwmConfig:config,wwmRuntime:{playerProfile:config.levels.defaultPlayerProfile}}); savedConfig=clone(config); show(config); status.textContent='Defaults restored. Previous configuration backed up.'; };
+document.getElementById('reset').onclick=async()=>{ const config=clone(globalThis.WWM_DEFAULT_CONFIG); await ext.storage.local.set({wwmConfigBackup:savedConfig,wwmConfig:config,wwmRuntime:{playerProfile:null,nativePlayerLevel:null}}); savedConfig=clone(config); show(config); status.textContent='Defaults restored. Previous configuration backed up.'; };
 const credits=document.createElement('footer');
 credits.append('Unofficial WWM Calculator Data Patch · ');
 const repository=document.createElement('a');
