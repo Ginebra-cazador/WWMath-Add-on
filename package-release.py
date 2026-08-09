@@ -18,5 +18,5 @@ def package(folder: str, filename: str) -> None:
         assert all("\\" not in name for name in names)
     print(destination)
 
-package("firefox", "Unofficial-WWM-Patch-Firefox-v3.3.15.zip")
-package("chrome", "Unofficial-WWM-Patch-Chrome-v2.3.15.zip")
+package("firefox", "Unofficial-WWM-Patch-Firefox-v3.3.16.zip")
+package("chrome", "Unofficial-WWM-Patch-Chrome-v2.3.16.zip")

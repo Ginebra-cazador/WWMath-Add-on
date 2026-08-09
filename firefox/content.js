@@ -119,6 +119,18 @@ button.addEventListener('click', () => ext.runtime.sendMessage({ type: 'wwm-open
 document.body.appendChild(button);
 expose();
 
+const updateLink = document.createElement('a');
+updateLink.style.cssText = 'display:none;position:fixed;right:12px;bottom:54px;z-index:2147483647;padding:7px 11px;border:1px solid #55d98b;border-radius:7px;background:#17233f;color:#8ff0b6;font:12px system-ui;text-decoration:none;box-shadow:0 2px 8px #0008';
+updateLink.target = '_blank';
+updateLink.rel = 'noopener noreferrer';
+document.body.appendChild(updateLink);
+ext.runtime.sendMessage({ type: 'wwm-check-update' }).then(status => {
+  if (!status?.available) return;
+  updateLink.textContent = `Update available: v${status.latestVersion}`;
+  updateLink.href = status.releaseUrl;
+  updateLink.style.display = 'block';
+});
+
 function renderCompatibility() {
   if (!compatibility) return;
   const warning=compatibility.versionMatch===false || compatibility.appError || compatibility.workerError;

@@ -13,9 +13,12 @@ browser.storage.onChanged.addListener(changes => {
 });
 
 browser.runtime.onMessage.addListener(async message => {
-  if (message?.type !== 'wwm-open-options') return undefined;
-  await browser.runtime.openOptionsPage();
-  return { ok: true };
+  if (message?.type === 'wwm-open-options') {
+    await browser.runtime.openOptionsPage();
+    return { ok: true };
+  }
+  if (message?.type === 'wwm-check-update') return WWMUpdateCheck.check(browser, 'firefox');
+  return undefined;
 });
 
 function patchSource(url, source) {

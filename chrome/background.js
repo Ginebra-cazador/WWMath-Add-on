@@ -1,6 +1,6 @@
 'use strict';
 
-importScripts('config.js', 'patch-core.js');
+importScripts('config.js', 'patch-core.js', 'update-check.js');
 
 let activeConfig = JSON.parse(JSON.stringify(globalThis.WWM_DEFAULT_CONFIG));
 let activeProfile = activeConfig.levels.defaultPlayerProfile;
@@ -176,6 +176,10 @@ chrome.debugger.onDetach.addListener(source => {
 chrome.tabs.onRemoved.addListener(tabId => { attachedTabs.delete(tabId); tabStates.delete(tabId); });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'wwm-check-update') {
+    WWMUpdateCheck.check(chrome, 'chrome').then(sendResponse);
+    return true;
+  }
   if (message.type === 'wwm-enable' && sender.tab?.id) {
     enableTab(sender.tab.id).then(() => {
       sendResponse({ ok: true });
