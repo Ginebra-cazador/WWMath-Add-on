@@ -42,8 +42,9 @@ Chrome displays its standard debugging banner while response interception is act
 ## Using the patch
 
 After activation, import your profile, then open the calculator website's **Settings** tab (next to **Profile**). Use **Player Level** and **Enemy Level** there to change the levels used by the live calculation. Enable **Show other enemy levels** when you need to select an enemy level other than the website's default.
+<img width="1404" height="837" alt="image" src="https://github.com/user-attachments/assets/8bff89b3-ef6d-4046-9a27-5166b59786e3" />
 
-Choose **Lv.100 (Fixed)** under **Player Level** to use the verified Stonesplit coefficients and the confirmed 6% cap (3.6%-6% range) for every skill entry marked `(attune)`. The website's native **Lv.100** option preserves the calculator developer's original data. These live selections belong to the website's Settings page; Patch Settings is used to edit or add the data tables that supply those choices.
+Choose **Lv.100 (Fixed)** or any custom under **Player Level** to use the verified Stonesplit coefficients and the confirmed 6% cap (3.6%-6% range) for every skill entry marked `(attune)`. The website's native **Lv.100** option preserves the calculator developer's original data. These live selections belong to the website's Settings page; Patch Settings is used to edit or add the data tables that supply those choices.
 
 Level 96 gear remains available. For a Legendary Level 96 weapon, the base line should display `Min Phys +65, Max Phys +151`, and those base values should contribute to Character Stats and DPS.
 
@@ -94,6 +95,11 @@ Enemy Level 96 defense (`405`) and resistance (`65%`) remain separate from the p
 - If Level 96 appears but does not affect DPS, fully close the calculator tab and reopen it after enabling the patch.
 - Firefox diagnostics are available from the extension's **Inspect** button under `about:debugging`.
 - Chrome requires the patch button to show **WWM Patch: ON** for the current calculator tab.
+- If On the Chrome version, the Addon fails to attach to the tables correctly It will require a full Refresh (CTRL+SHIFT+R)
+- <img width="147" height="56" alt="image" src="https://github.com/user-attachments/assets/9af32ebd-1be8-4ce2-8651-1f688b778364" />
+- <img width="940" height="238" alt="image" src="https://github.com/user-attachments/assets/55d66b85-bba0-499a-aff0-701109c41277" />
+
+
 
 ## Privacy and permissions
 
