@@ -8,7 +8,8 @@ Once per day, the extension may read the repository's static `update.json` file 
 
 ## Downloads
 
-Use the ZIP files attached to the latest entry on the repository's **Releases** page:
+Use the ZIP files attached to the latest entry on the repository's **[Releases](https://github.com/Ginebra-cazador/WWMath-Add-on/releases)** page:
+
 
 - `Unofficial-WWM-Patch-Firefox-v3.3.17.zip`
 - `Unofficial-WWM-Patch-Chrome-v2.3.17.zip`
