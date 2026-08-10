@@ -41,6 +41,11 @@ Chrome displays its standard debugging banner while response interception is act
 
 ## Using the patch
 
+Make sure the Patch is active on Chrome, on Firefox it is active once the Add-on is installed.
+On Chrome, just click on the Red button and it should turn to green as shown on the Picture, *IF it doesn't. Check Troubleshooting bellow*.
+<img width="735" height="837" alt="image" src="https://github.com/user-attachments/assets/0dd762b8-9750-4bae-a59d-53d24144b5c7" />
+
+
 After activation, import your profile, then open the calculator website's **Settings** tab (next to **Profile**). Use **Player Level** and **Enemy Level** there to change the levels used by the live calculation. Enable **Show other enemy levels** when you need to select an enemy level other than the website's default.
 <img width="1404" height="837" alt="image" src="https://github.com/user-attachments/assets/bcc9e5bd-c86b-4b82-bb5e-7edbc0060c9b" />
 
