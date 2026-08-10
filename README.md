@@ -15,9 +15,7 @@ Use the ZIP files attached to the latest entry on the repository's **Releases** 
 
 The `firefox/` and `chrome/` folders contain the matching readable source code.
 
-## Firefox installation
-
-### Temporary/manual installation
+## Firefox installation (Manual And Temporary)
 
 1. Download and extract the Firefox ZIP from **Releases**.
 2. Disable older WWM Tampermonkey patches and remove older temporary copies of this add-on.
@@ -29,7 +27,7 @@ The `firefox/` and `chrome/` folders contain the matching readable source code.
 
 Temporary add-ons are removed when Firefox closes. Install the signed Mozilla Add-ons edition when it becomes available if you want a permanent installation.
 
-## Chrome installation
+## Chrome installation (Manual)
 
 1. Download and extract the Chrome ZIP from **Releases** to a permanent folder.
 2. Open `chrome://extensions`.
