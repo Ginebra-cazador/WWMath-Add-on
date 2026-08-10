@@ -42,7 +42,8 @@ Chrome displays its standard debugging banner while response interception is act
 ## Using the patch
 
 After activation, import your profile, then open the calculator website's **Settings** tab (next to **Profile**). Use **Player Level** and **Enemy Level** there to change the levels used by the live calculation. Enable **Show other enemy levels** when you need to select an enemy level other than the website's default.
-<img width="1404" height="837" alt="image" src="https://github.com/user-attachments/assets/8bff89b3-ef6d-4046-9a27-5166b59786e3" />
+<img width="1404" height="837" alt="image" src="https://github.com/user-attachments/assets/bcc9e5bd-c86b-4b82-bb5e-7edbc0060c9b" />
+
 
 Choose **Lv.100 (Fixed)** or any custom under **Player Level** to use the verified Stonesplit coefficients and the confirmed 6% cap (3.6%-6% range) for every skill entry marked `(attune)`. The website's native **Lv.100** option preserves the calculator developer's original data. These live selections belong to the website's Settings page; Patch Settings is used to edit or add the data tables that supply those choices.
 
