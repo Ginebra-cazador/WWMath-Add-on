@@ -96,7 +96,7 @@ Enemy Level 96 defense (`405`) and resistance (`65%`) remain separate from the p
 - If Level 96 appears but does not affect DPS, fully close the calculator tab and reopen it after enabling the patch.
 - Firefox diagnostics are available from the extension's **Inspect** button under `about:debugging`.
 - Chrome requires the patch button to show **WWM Patch: ON** for the current calculator tab.
-- If On the Chrome version, the Addon fails to attach to the tables correctly It will require a full Refresh (CTRL+SHIFT+R)
+- If On the Chrome version, the Addon fails to attach to the tables correctly It will require a full WWMath Page Refresh (CTRL+SHIFT+R)
 <img width="147" height="56" alt="image" src="https://github.com/user-attachments/assets/9af32ebd-1be8-4ce2-8651-1f688b778364" />
 <img width="940" height="238" alt="image" src="https://github.com/user-attachments/assets/55d66b85-bba0-499a-aff0-701109c41277" />
 
