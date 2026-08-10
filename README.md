@@ -48,7 +48,8 @@ On Chrome, just click on the Red button and it should turn to green as shown on 
 
 
 After activation, import your profile, then open the calculator website's **Settings** tab (next to **Profile**). Use **Player Level** and **Enemy Level** there to change the levels used by the live calculation. Enable **Show other enemy levels** when you need to select an enemy level other than the website's default.
-<img width="1404" height="837" alt="image" src="https://github.com/user-attachments/assets/bcc9e5bd-c86b-4b82-bb5e-7edbc0060c9b" />
+<img width="1404" height="837" alt="image" src="https://github.com/user-attachments/assets/9878beed-f516-4ac3-b522-0eab589cd2a6" />
+
 
 
 Choose **Lv.100 (Fixed)** or any custom under **Player Level** to use the verified Stonesplit coefficients and the confirmed 6% cap (3.6%-6% range) for every skill entry marked `(attune)`. The website's native **Lv.100** option preserves the calculator developer's original data. These live selections belong to the website's Settings page; Patch Settings is used to edit or add the data tables that supply those choices.
