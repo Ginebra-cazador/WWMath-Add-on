@@ -1,7 +1,7 @@
 'use strict';
 const ext = globalThis.browser || globalThis.chrome;
-const fields = { levels: document.getElementById('levels-json'), baseTuningStats: document.getElementById('tuning-json'), skillCoefficients: document.getElementById('skills-json'), baseGearStats: document.getElementById('gear-json') };
-const friendly = { levels: document.getElementById('levels-friendly'), baseTuningStats: document.getElementById('tuning-friendly'), skillCoefficients: document.getElementById('skills-friendly'), baseGearStats: document.getElementById('gear-friendly') };
+const fields = { levels: document.getElementById('levels-json'), baseCharacterStats: document.getElementById('character-json'), oddityTalentStats: document.getElementById('progression-json'), martialArtsTalents: document.getElementById('martial-talents-json'), baseTuningStats: document.getElementById('tuning-json'), skillCoefficients: document.getElementById('skills-json'), baseGearStats: document.getElementById('gear-json') };
+const friendly = { levels: document.getElementById('levels-friendly'), baseCharacterStats: document.getElementById('character-friendly'), oddityTalentStats: document.getElementById('progression-friendly'), martialArtsTalents: document.getElementById('martial-talents-friendly'), baseTuningStats: document.getElementById('tuning-friendly'), skillCoefficients: document.getElementById('skills-friendly'), baseGearStats: document.getElementById('gear-friendly') };
 const status = document.getElementById('status');
 const clone = x => JSON.parse(JSON.stringify(x));
 let draft = clone(globalThis.WWM_DEFAULT_CONFIG);
@@ -11,13 +11,63 @@ function normalizeConfig(config) {
   const normalized=config?.schemaVersion===3?clone(config):clone(globalThis.WWM_DEFAULT_CONFIG);
   if(!Number.isFinite(normalized.levels.relayMultiplier))normalized.levels.relayMultiplier=0.94;
   if(!normalized.levels.supportedAppVersion)normalized.levels.supportedAppVersion=globalThis.WWM_DEFAULT_CONFIG.levels.supportedAppVersion;
+  if(!normalized.levels.playerProfiles?.[normalized.levels.recommendedPlayerProfile])normalized.levels.recommendedPlayerProfile=normalized.levels.defaultPlayerProfile||Object.keys(normalized.levels.playerProfiles||{})[0]||null;
+  if(!normalized.levels.enemyLevels?.[normalized.levels.recommendedEnemyLevel])normalized.levels.recommendedEnemyLevel=Object.keys(normalized.levels.enemyLevels||{})[0]||null;
   delete normalized.levels.playerProfiles?.['original-100'];
   if(!normalized.levels.arsenalTables)normalized.levels.arsenalTables=clone(globalThis.WWM_DEFAULT_CONFIG.levels.arsenalTables);
   for(const table of Object.values(normalized.levels.arsenalTables||{})){
     if(table.stonesplit||table.general){table.minAttack=table.stonesplit?.minStonesplit??table.general?.minPhys??0;table.maxAttack=table.stonesplit?.maxStonesplit??table.general?.maxPhys??0;delete table.stonesplit;delete table.general;}
     delete table.maxHp;
   }
-  for(const [id,profile] of Object.entries(normalized.levels.playerProfiles||{}))if(!Object.hasOwn(profile,'arsenalTable'))profile.arsenalTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.arsenalTable??null;
+  for(const [id,profile] of Object.entries(normalized.levels.playerProfiles||{})){
+    if(!Object.hasOwn(profile,'arsenalTable'))profile.arsenalTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.arsenalTable??null;
+    if(!profile.foodBonus)profile.foodBonus=clone(globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.foodBonus||{minPhys:120,maxPhys:240});
+  }
+  if(!normalized.baseCharacterStats)normalized.baseCharacterStats=clone(globalThis.WWM_DEFAULT_CONFIG.baseCharacterStats);
+  for(const [id,profile] of Object.entries(normalized.levels.playerProfiles||{}))if(!Object.hasOwn(profile,'characterTable'))profile.characterTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.characterTable??null;
+  const legacyLayersMissing=!normalized.oddityTalentStats&&!normalized.martialArtsTalents;
+  if(legacyLayersMissing){
+    const legacy=normalized.baseCharacterStats?.['level-100-fixed'];
+    const supplied=globalThis.WWM_DEFAULT_CONFIG.baseCharacterStats['level-100-fixed'];
+    const oldSupplied=legacy&&legacy.minPhys===595.68&&legacy.maxPhys===947.34&&legacy.minPrimaryAttribute===274&&legacy.maxPrimaryAttribute===549;
+    if(oldSupplied)normalized.baseCharacterStats['level-100-fixed']=clone(supplied);
+    else if(legacy){
+      const deltas={power:3,agility:3,momentum:3,body:3,defense:3,minPhys:44,maxPhys:273.9,minPrimaryAttribute:53.8,maxPrimaryAttribute:108.8,precision:0.015,crit:0.04,affinity:0.02,attrDmgBonus:0.02};
+      for(const [key,value] of Object.entries(deltas))legacy[key]=(Number(legacy[key])||0)-value;
+    }
+  }
+  if(!normalized.oddityTalentStats)normalized.oddityTalentStats=clone(globalThis.WWM_DEFAULT_CONFIG.oddityTalentStats);
+  if(!normalized.martialArtsTalents)normalized.martialArtsTalents=clone(globalThis.WWM_DEFAULT_CONFIG.martialArtsTalents);
+  const oldProgression=normalized.oddityTalentStats?.['level-100-complete']?.entries?.find(entry=>entry.name==='Level 100 progression and general talents (reconciled)');
+  if(oldProgression){
+    const base=normalized.baseCharacterStats?.['level-100-fixed'];
+    if(base){const shifts={power:13,agility:13,momentum:13,body:13,defense:13,minPhys:33.53888,maxPhys:54.06936,precision:0.013,crit:-0.06439728,affinity:-0.00008};for(const [key,value] of Object.entries(shifts))base[key]=(Number(base[key])||0)+value;}
+    oldProgression.name='Normal Talent Tree - Breakthrough 16 New Nodes';
+    oldProgression.bonuses={power:3,agility:3,momentum:3,body:3,defense:3,precision:0.015,crit:0.04,affinity:0.02};
+  }
+  const level100Bonuses=normalized.oddityTalentStats?.['level-100-complete'];
+  if(level100Bonuses){
+    level100Bonuses.label='Level 100 - Completed progression and oddities';
+    const normalTalent=level100Bonuses.entries?.find(entry=>entry.name==='Normal Talent Tree — confirmed combat bonuses');
+    if(normalTalent)normalTalent.name='Normal Talent Tree - Breakthrough 16 New Nodes';
+    const oddities=(level100Bonuses.entries||[]).filter(entry=>/Oddities$/i.test(entry.name||''));
+    if(!normalized.oddityTalentStats['completed-oddities'])normalized.oddityTalentStats['completed-oddities']={label:'Completed Oddities - All Player Levels',levelIndependent:true,entries:oddities.length?clone(oddities):clone(globalThis.WWM_DEFAULT_CONFIG.oddityTalentStats['completed-oddities'].entries)};
+    level100Bonuses.entries=(level100Bonuses.entries||[]).filter(entry=>!/Oddities$/i.test(entry.name||''));
+  }
+  const globalOddities=normalized.oddityTalentStats?.['completed-oddities'];
+  if(globalOddities){globalOddities.label='Completed Oddities - All Player Levels';globalOddities.levelIndependent=true;}
+  const stonesplitTalents=normalized.martialArtsTalents?.['stonesplit-complete'];
+  if(stonesplitTalents)stonesplitTalents.label='Stonesplit Might Martial Arts Talents';
+  if(stonesplitTalents&&!stonesplitTalents.entries?.some(entry=>entry.name==='Charge Calculation Enhancement')){
+    const base=normalized.baseCharacterStats?.['level-100-fixed'];
+    if(base)base.maxPhys=(Number(base.maxPhys)||0)-120;
+    stonesplitTalents.entries??=[];
+    stonesplitTalents.entries.unshift({name:'Charge Calculation Enhancement',enabled:true,bonuses:{maxPhys:120}});
+  }
+  for(const [id,profile] of Object.entries(normalized.levels.playerProfiles||{})){
+    if(!Object.hasOwn(profile,'oddityTalentTable'))profile.oddityTalentTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.oddityTalentTable??null;
+    if(!Object.hasOwn(profile,'martialArtsTalentTable'))profile.martialArtsTalentTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.martialArtsTalentTable??null;
+  }
   for(const [id,table] of Object.entries(normalized.skillCoefficients||{}))for(const rule of table.coefficientRules||[]){const supplied=globalThis.WWM_DEFAULT_CONFIG.skillCoefficients[id]?.coefficientRules?.find(x=>x.name===rule.name)?.gameplay;if(!rule.gameplay||Object.values(rule.gameplay).every(value=>value===''))rule.gameplay=clone(supplied||{hitCount:'',timingSeconds:'',notes:''});}
   for(const [id,table] of Object.entries(normalized.skillCoefficients||{}))if(!table.innerWayRules&&globalThis.WWM_DEFAULT_CONFIG.skillCoefficients[id]?.innerWayRules)table.innerWayRules=clone(globalThis.WWM_DEFAULT_CONFIG.skillCoefficients[id].innerWayRules);
   if(normalized.baseGearStats?.['96']&&!normalized.baseGearStats['96'].bowSet)normalized.baseGearStats['96'].bowSet=clone(globalThis.WWM_DEFAULT_CONFIG.baseGearStats['96'].bowSet);
@@ -27,7 +77,7 @@ function normalizeConfig(config) {
 }
 
 function humanize(value) {
-  const labels = { physPen: 'Physical Penetration', attributePen: 'Formless (Attribute) Penetration', physicalDefense: 'Physical Defense', skillAttunement: 'Skill Attunement Maximum', attunementRange: 'Skill Attunement Range', coefficientRules: 'Skill List', innerWayRules: 'Innerway Buffs Data', armorSets: 'Armor Set Data', bowSet: 'Bow Set Data', rainwhisper: 'Rainwhisper — Precision Rate', ivorybloom: 'Ivorybloom — Critical Rate', hawkwing: 'Hawkwing — Affinity Rate', shatteredridge: 'Shattered Ridge (Cleftpeak) — Min Physical Attack', from: 'Original Calculator Values', to: 'Replacement Values', expected: 'Code Match Count', gameplay: 'Timing and Hit Data', timingSeconds: 'Timing (seconds)' };
+  const labels = { oddityTalentTable: 'Post-Breakthrough Player Talents table', martialArtsTalentTable: 'Martial Arts talents table', stonesplitPen: 'Stonesplit Penetration', bonuses: 'Stat bonuses', physPen: 'Physical Penetration', attributePen: 'Formless (Attribute) Penetration', physicalDefense: 'Physical Defense', skillAttunement: 'Skill Attunement Maximum', attunementRange: 'Skill Attunement Range', coefficientRules: 'Skill List', innerWayRules: 'Innerway Buffs Data', armorSets: 'Armor Set Data', bowSet: 'Bow Set Data', rainwhisper: 'Rainwhisper — Precision Rate', ivorybloom: 'Ivorybloom — Critical Rate', hawkwing: 'Hawkwing — Affinity Rate', shatteredridge: 'Shattered Ridge (Cleftpeak) — Min Physical Attack', from: 'Original Calculator Values', to: 'Replacement Values', expected: 'Code Match Count', gameplay: 'Timing and Hit Data', timingSeconds: 'Timing (seconds)' };
   if (labels[value]) return labels[value];
   return String(value).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[-_]/g, ' ').replace(/^./, x => x.toUpperCase());
 }
@@ -67,9 +117,17 @@ function renderNode(container, value, path = [], editRoot = draft) {
     const label = document.createElement('label'); label.textContent = humanize(key);
     const pathHint = document.createElement('small'); pathHint.textContent = childPath.join(' > '); label.appendChild(pathHint);
     let input;
-    if (path[0] === 'playerProfiles' && ['tuningTable','coefficientTable','arsenalTable'].includes(key)) {
+    if (path.length===0 && key==='recommendedPlayerProfile') {
+      input=document.createElement('select');
+      for(const [id,profile] of Object.entries(draft.levels.playerProfiles||{}))input.add(new Option(profile.label||id,id));
+      input.value=child||'';
+    } else if (path.length===0 && key==='recommendedEnemyLevel') {
+      input=document.createElement('select');
+      for(const [id,enemy] of Object.entries(draft.levels.enemyLevels||{}))input.add(new Option(enemy.label||`Lv.${enemy.level}`,id));
+      input.value=child||'';
+    } else if (path[0] === 'playerProfiles' && ['characterTable','oddityTalentTable','martialArtsTalentTable','tuningTable','coefficientTable','arsenalTable'].includes(key)) {
       input=document.createElement('select'); input.add(new Option('None (use original website data)',''));
-      const choices=key==='tuningTable' ? Object.keys(draft.baseTuningStats) : (key==='coefficientTable'?Object.keys(draft.skillCoefficients):Object.keys(draft.levels.arsenalTables||{}));
+      const choices=key==='characterTable' ? Object.keys(draft.baseCharacterStats) : key==='oddityTalentTable' ? Object.keys(draft.oddityTalentStats).filter(id=>!draft.oddityTalentStats[id].levelIndependent) : key==='martialArtsTalentTable' ? Object.keys(draft.martialArtsTalents) : (key==='tuningTable' ? Object.keys(draft.baseTuningStats) : (key==='coefficientTable'?Object.keys(draft.skillCoefficients):Object.keys(draft.levels.arsenalTables||{})));
       for (const id of choices) input.add(new Option(id,id));
       input.value=child || '';
     } else if (typeof child === 'boolean') { input=document.createElement('input'); input.type='checkbox'; input.checked=child; }
@@ -86,7 +144,7 @@ function renderNode(container, value, path = [], editRoot = draft) {
       let next;
       if (typeof child === 'boolean') next=input.checked;
       else if (typeof child === 'number') next=input.value === '' ? 0 : Number(input.value);
-      else if (child === null) next=input.value === '' ? null : (['tuningTable','coefficientTable','arsenalTable'].includes(key) ? input.value : Number(input.value));
+      else if (child === null) next=input.value === '' ? null : (['characterTable','oddityTalentTable','martialArtsTalentTable','tuningTable','coefficientTable','arsenalTable'].includes(key) ? input.value : Number(input.value));
       else next=input.value;
       setAt(editRoot, childPath, next);
     };
@@ -109,6 +167,74 @@ function chooseSource(label, existing) {
   return answer || null;
 }
 function action(label, handler) { const button=document.createElement('button'); button.className='add'; button.textContent=label; button.onclick=handler; return button; }
+function selectLayerEntryDestination({title,tables,tableLabel,templateLabel,defaultName}) {
+  return new Promise(resolve=>{
+    const dialog=document.createElement('dialog');
+    const heading=document.createElement('h2'); heading.textContent=title;
+    const destinationLabel=document.createElement('label'); destinationLabel.textContent=tableLabel;
+    const destinationSelect=document.createElement('select');
+    for(const [id,table] of Object.entries(tables))destinationSelect.add(new Option(table.label||humanize(id),id));
+    const sourceLabel=document.createElement('label'); sourceLabel.textContent=templateLabel;
+    const sourceSelect=document.createElement('select'); sourceSelect.add(new Option('Blank entry',''));
+    const entries=Object.values(tables).flatMap(table=>table.entries||[]);
+    for(const entry of [...new Map(entries.map(item=>[item.name,item])).values()])sourceSelect.add(new Option(entry.name,entry.name));
+    const nameLabel=document.createElement('label'); nameLabel.textContent='New entry name';
+    const nameInput=document.createElement('input'); nameInput.value=defaultName;
+    sourceSelect.onchange=()=>{if(sourceSelect.value)nameInput.value=sourceSelect.value;};
+    const add=document.createElement('button'); add.className='add'; add.textContent=title;
+    const cancel=document.createElement('button'); cancel.textContent='Cancel';
+    const finish=value=>{dialog.close();dialog.remove();resolve(value);};
+    add.onclick=()=>{const name=nameInput.value.trim();if(!name)return alert('Enter a name for the new entry.');finish({tableId:destinationSelect.value,sourceName:sourceSelect.value,name});};
+    cancel.onclick=()=>finish(null);
+    dialog.append(heading,destinationLabel,destinationSelect,sourceLabel,sourceSelect,nameLabel,nameInput,add,cancel); document.body.appendChild(dialog); dialog.showModal();
+  });
+}
+function selectPlayerTalentList() {
+  return new Promise(resolve=>{
+    const dialog=document.createElement('dialog');
+    const heading=document.createElement('h2'); heading.textContent='Add Player Level Talent List';
+    const levelLabel=document.createElement('label'); levelLabel.textContent='Player level';
+    const levelInput=document.createElement('input'); levelInput.type='number'; levelInput.min='1'; levelInput.step='1'; levelInput.value='105';
+    const templateLabel=document.createElement('label'); templateLabel.textContent='Base the new list on';
+    const templateSelect=document.createElement('select'); templateSelect.add(new Option('Blank list',''));
+    for(const [id,table] of Object.entries(draft.oddityTalentStats).filter(([,table])=>!table.levelIndependent))templateSelect.add(new Option(table.label||humanize(id),id));
+    const add=document.createElement('button'); add.className='add'; add.textContent='Add Player Level Talent List';
+    const cancel=document.createElement('button'); cancel.textContent='Cancel';
+    const finish=value=>{dialog.close();dialog.remove();resolve(value);};
+    add.onclick=()=>{const level=Number(levelInput.value);if(!Number.isInteger(level)||level<1)return alert('Enter a whole-number player level.');finish({level,sourceId:templateSelect.value});};
+    cancel.onclick=()=>finish(null);
+    dialog.append(heading,levelLabel,levelInput,templateLabel,templateSelect,add,cancel);document.body.appendChild(dialog);dialog.showModal();
+  });
+}
+function selectOddityMapping() {
+  const tables=Object.fromEntries(Object.entries(draft.oddityTalentStats).filter(([,table])=>table.levelIndependent));
+  return selectLayerEntryDestination({title:'Map New Oddity',tables,tableLabel:'Level-independent Oddities list',templateLabel:'Base the new Oddity on',defaultName:'New Oddity'});
+}
+function selectMappedEntryBonus() {
+  return new Promise(resolve=>{
+    const dialog=document.createElement('dialog');
+    const heading=document.createElement('h2'); heading.textContent='Add Bonus to Mapped Entry';
+    const tableLabel=document.createElement('label'); tableLabel.textContent='Oddity or Player Talent list';
+    const tableSelect=document.createElement('select');
+    for(const [id,table] of Object.entries(draft.oddityTalentStats))tableSelect.add(new Option(table.label||humanize(id),id));
+    const entryLabel=document.createElement('label'); entryLabel.textContent='Mapped entry';
+    const entrySelect=document.createElement('select');
+    const statLabel=document.createElement('label'); statLabel.textContent='Stat bonus';
+    const statSelect=document.createElement('select');
+    const valueLabel=document.createElement('label'); valueLabel.textContent='Bonus value (percentages use decimal form, for example 0.02 for 2%)';
+    const valueInput=document.createElement('input'); valueInput.type='number'; valueInput.step='any'; valueInput.value='0';
+    const statKeys=[...new Set([...Object.keys(globalThis.WWM_DEFAULT_CONFIG.baseCharacterStats['level-100-fixed']), 'stonesplitPen'])];
+    const updateStats=()=>{statSelect.replaceChildren();const table=draft.oddityTalentStats[tableSelect.value];const entry=table?.entries?.[Number(entrySelect.value)];for(const key of statKeys.filter(key=>!Object.hasOwn(entry?.bonuses||{},key)))statSelect.add(new Option(humanize(key),key));};
+    const updateEntries=()=>{entrySelect.replaceChildren();const table=draft.oddityTalentStats[tableSelect.value];for(const [index,entry] of (table?.entries||[]).entries())entrySelect.add(new Option(entry.name,String(index)));updateStats();};
+    tableSelect.onchange=updateEntries;entrySelect.onchange=updateStats;updateEntries();
+    const add=document.createElement('button'); add.className='add'; add.textContent='Add Bonus';
+    const cancel=document.createElement('button'); cancel.textContent='Cancel';
+    const finish=value=>{dialog.close();dialog.remove();resolve(value);};
+    add.onclick=()=>{if(!entrySelect.options.length)return alert('The selected list has no mapped entries.');if(!statSelect.value)return alert('Every supported stat is already mapped on this entry.');const value=Number(valueInput.value);if(!Number.isFinite(value))return alert('Enter a numeric bonus value.');finish({tableId:tableSelect.value,entryIndex:Number(entrySelect.value),statKey:statSelect.value,value});};
+    cancel.onclick=()=>finish(null);
+    dialog.append(heading,tableLabel,tableSelect,entryLabel,entrySelect,statLabel,statSelect,valueLabel,valueInput,add,cancel);document.body.appendChild(dialog);dialog.showModal();
+  });
+}
 function selectSkillDestination() {
   return new Promise(resolve=>{
     const dialog=document.createElement('dialog');
@@ -156,11 +282,19 @@ function selectInnerWayDestination() {
 function addActions(section,container) {
   const actions=document.createElement('div'); actions.className='actions';
   if (section==='levels') {
-    actions.append(action('+ Add player profile',()=>{ const id=askId('New profile ID, for example fixed-105:',draft.levels.playerProfiles); if(!id)return; const source=chooseSource('player profile',draft.levels.playerProfiles); if(source===false)return; const base=source?clone(draft.levels.playerProfiles[source]):{label:'',level:105,tuningTable:null,coefficientTable:null,arsenalTable:null}; const level=Number(prompt('Player level:',String(base.level||105))); if(!Number.isInteger(level))return alert('Enter a whole-number level.'); draft.levels.playerProfiles[id]={...base,label:`Lv.${level}`,level}; renderFriendly(); }),
+    actions.append(action('+ Add player profile',()=>{ const id=askId('New profile ID, for example fixed-105:',draft.levels.playerProfiles); if(!id)return; const source=chooseSource('player profile',draft.levels.playerProfiles); if(source===false)return; const base=source?clone(draft.levels.playerProfiles[source]):{label:'',level:105,characterTable:null,oddityTalentTable:null,martialArtsTalentTable:null,tuningTable:null,coefficientTable:null,arsenalTable:null,foodBonus:{minPhys:120,maxPhys:240}}; const level=Number(prompt('Player level:',String(base.level||105))); if(!Number.isInteger(level))return alert('Enter a whole-number level.'); draft.levels.playerProfiles[id]={...base,label:`Lv.${level}`,level}; renderFriendly(); }),
       action('+ Add enemy level',()=>{ const id=askId('New enemy level ID, for example 105:',draft.levels.enemyLevels); if(!id)return; const level=Number(id); if(!Number.isInteger(level))return alert('Use a whole-number level ID.'); const source=chooseSource('enemy level',draft.levels.enemyLevels); if(source===false)return; draft.levels.enemyLevels[id]=source?clone(draft.levels.enemyLevels[source]):{label:`Lv.${level}`,level,defense:0,resistance:0}; draft.levels.enemyLevels[id].label=`Lv.${level}`; draft.levels.enemyLevels[id].level=level; renderFriendly(); }),
       action('+ Add Arsenal table',()=>{ const id=askId('New Arsenal table ID, for example level-105:',draft.levels.arsenalTables); if(!id)return; const source=chooseSource('Arsenal table',draft.levels.arsenalTables); if(source===false)return; draft.levels.arsenalTables[id]=source?clone(draft.levels.arsenalTables[source]):{minAttack:0,maxAttack:0}; renderFriendly(); }));
   }
   if (section==='baseTuningStats') actions.append(action('+ Add base tuning table',()=>{ const id=askId('New tuning table ID, for example level-105:',draft.baseTuningStats); if(!id)return; const source=chooseSource('tuning table',draft.baseTuningStats); if(source===false)return; draft.baseTuningStats[id]=source?clone(draft.baseTuningStats[source]):{sourceBracket:96,maxRolls:{minMaxPhys:0,precision:0,crit:0,affinity:0,coreAttribute:0,attributeAttack:0,physPen:0,attributePen:0,maxHp:0,physicalDefense:0,specifiedWeaponBoost:0,allMartialArtsBoost:0,bossDamage:0,attackTypeDamage:null,mysticDamage:0,skillAttunement:0},attunementRange:{min:0,max:0}}; renderFriendly(); }));
+  if (section==='baseCharacterStats') actions.append(action('+ Add base character table',()=>{ const id=askId('New base character table ID, for example level-105:',draft.baseCharacterStats); if(!id)return; const source=chooseSource('base character table',draft.baseCharacterStats); if(source===false)return; const template=globalThis.WWM_DEFAULT_CONFIG.baseCharacterStats['level-100-fixed']; draft.baseCharacterStats[id]=source?clone(draft.baseCharacterStats[source]):Object.fromEntries(Object.keys(template).map(key=>[key,0])); renderFriendly(); }));
+  if (section==='oddityTalentStats') actions.append(
+    action('+ Add Player Level Talent List',async()=>{const choice=await selectPlayerTalentList();if(!choice)return;const id=`level-${choice.level}-talents`;if(Object.hasOwn(draft.oddityTalentStats,id))return alert(`“${id}” already exists.`);const source=choice.sourceId?clone(draft.oddityTalentStats[choice.sourceId]):{entries:[]};draft.oddityTalentStats[id]={...source,label:`Level ${choice.level} - Post-Breakthrough Player Talents`,levelIndependent:false};renderFriendly();}),
+    action('+ Map New Oddity',async()=>{const choice=await selectOddityMapping();if(!choice)return;const target=draft.oddityTalentStats[choice.tableId];target.entries??=[];if(target.entries.some(entry=>entry.name===choice.name))return alert('An Oddity with that name is already mapped.');const template=Object.values(draft.oddityTalentStats).filter(table=>table.levelIndependent).flatMap(table=>table.entries||[]).find(entry=>entry.name===choice.sourceName);const entry=template?clone(template):{name:choice.name,enabled:true,bonuses:{}};entry.name=choice.name;target.entries.push(entry);renderFriendly();}),
+    action('+ Add Bonus to Mapped Entry',async()=>{const choice=await selectMappedEntryBonus();if(!choice)return;const entry=draft.oddityTalentStats[choice.tableId].entries[choice.entryIndex];entry.bonuses??={};entry.bonuses[choice.statKey]=choice.value;renderFriendly();})
+  );
+  if (section==='martialArtsTalents') actions.append(action('+ Add Martial Arts talents table',()=>{ const id=askId('New Martial Arts talents table ID:',draft.martialArtsTalents); if(!id)return; const source=chooseSource('Martial Arts talents table',draft.martialArtsTalents); if(source===false)return; draft.martialArtsTalents[id]=source?clone(draft.martialArtsTalents[source]):{label:humanize(id),entries:[]}; renderFriendly(); }));
+  if (section==='martialArtsTalents') actions.append(action('+ Add talent entry',async()=>{ const choice=await selectLayerEntryDestination({title:'Add talent entry',tables:draft.martialArtsTalents,tableLabel:'Martial Arts talents table',templateLabel:'Start from',defaultName:'New Martial Arts talent'}); if(!choice)return; const target=draft.martialArtsTalents[choice.tableId]; target.entries??=[]; if(target.entries.some(entry=>entry.name===choice.name))return alert('An entry with that name already exists in the selected table.'); const template=Object.values(draft.martialArtsTalents).flatMap(table=>table.entries||[]).find(entry=>entry.name===choice.sourceName); const entry=template?clone(template):{name:choice.name,enabled:true,bonuses:{}}; entry.name=choice.name; target.entries.push(entry); renderFriendly(); }));
   if (section==='skillCoefficients') actions.append(
     action('+ Add Martial Arts table',()=>{ const id=askId('New Martial Arts table ID, for example stonesplit-105:',draft.skillCoefficients); if(!id)return; const source=chooseSource('Martial Arts table',draft.skillCoefficients); if(source===false)return; draft.skillCoefficients[id]=source?clone(draft.skillCoefficients[source]):{coefficientRules:[],namedStatRules:[],innerWayRules:[]}; renderFriendly(); }),
     action('+ Add Skill',async()=>{ const choice=await selectSkillDestination(); if(!choice)return; const rules=Object.values(draft.skillCoefficients).flatMap(x=>x.coefficientRules||[]); const template=rules.find(x=>x.name===choice.sourceName); if(!template)return alert('No source skill is available.'); const entry=clone(template); if(choice.createNew){entry.name=choice.name;if(choice.key)entry.skillName=choice.key;else delete entry.skillName;} const target=draft.skillCoefficients[choice.tableId]; if(target.coefficientRules.some(rule=>(rule.skillName||rule.name)===(entry.skillName||entry.name)))return alert('That skill already exists in the selected table.'); target.coefficientRules.push(entry); renderFriendly(); }),
@@ -181,6 +315,9 @@ function changedPaths(before,after,path='') {
 }
 
 document.querySelectorAll('.tab').forEach(button => button.onclick = () => { document.querySelectorAll('.tab,.panel').forEach(x => x.classList.remove('active')); button.classList.add('active'); document.getElementById(button.dataset.panel).classList.add('active'); });
+document.querySelector('[data-panel="progression"]').textContent='Oddities & Player Talents';
+document.querySelector('#progression>.hint').textContent='Post-Breakthrough Player Talents are linked to the selected Player Profile. Earlier mandatory progression is already included in Base character stats. Oddities are level-independent and apply to every patched player level.';
+document.querySelector('#martial-talents>.hint').textContent='Martial Arts Talent values assume that 100% of their conditions are fulfilled. These bonuses remain separate from Base character stats and Inner Ways.';
 document.querySelectorAll('.mode').forEach(button => button.onclick = () => {
   try {
     if (button.dataset.mode === mode) return;
@@ -197,12 +334,18 @@ document.querySelectorAll('.mode').forEach(button => button.onclick = () => {
 function validate(config) {
   const profiles=config.levels?.playerProfiles;
   if (!profiles || !profiles[config.levels.defaultPlayerProfile]) throw new Error('defaultPlayerProfile must name an existing player profile.');
+  if (!profiles[config.levels.recommendedPlayerProfile]) throw new Error('Recommended player profile must name an existing player profile.');
+  if (!config.levels.enemyLevels?.[config.levels.recommendedEnemyLevel]) throw new Error('Recommended enemy level must name an existing enemy level.');
   if (!Number.isFinite(config.levels.relayMultiplier) || config.levels.relayMultiplier<=0 || config.levels.relayMultiplier>1) throw new Error('Relay multiplier must be greater than 0 and no more than 1.');
   for (const [id,p] of Object.entries(profiles)) {
     if (!Number.isInteger(p.level) || !p.label) throw new Error(`Player profile ${id} needs a label and integer level.`);
     if (p.tuningTable && !config.baseTuningStats[p.tuningTable]) throw new Error(`Player profile ${id} refers to missing tuning table ${p.tuningTable}.`);
+    if (p.characterTable && !config.baseCharacterStats[p.characterTable]) throw new Error(`Player profile ${id} refers to missing base character table ${p.characterTable}.`);
+    if (p.oddityTalentTable && !config.oddityTalentStats[p.oddityTalentTable]) throw new Error(`Player profile ${id} refers to missing Oddities & general talents table ${p.oddityTalentTable}.`);
+    if (p.martialArtsTalentTable && !config.martialArtsTalents[p.martialArtsTalentTable]) throw new Error(`Player profile ${id} refers to missing Martial Arts talents table ${p.martialArtsTalentTable}.`);
     if (p.coefficientTable && !config.skillCoefficients[p.coefficientTable]) throw new Error(`Player profile ${id} refers to missing coefficient table ${p.coefficientTable}.`);
     if (p.arsenalTable && !config.levels.arsenalTables?.[p.arsenalTable]) throw new Error(`Player profile ${id} refers to missing Arsenal table ${p.arsenalTable}.`);
+    if (![p.foodBonus?.minPhys,p.foodBonus?.maxPhys].every(Number.isFinite)) throw new Error(`Player profile ${id} needs numeric Food Bonus minPhys and maxPhys values.`);
   }
   for (const [id,e] of Object.entries(config.levels.enemyLevels||{})) if (![e.level,e.defense,e.resistance].every(Number.isFinite)) throw new Error(`Enemy level ${id} needs numeric level, defense, and resistance.`);
   const percentageKeys=['precision','crit','affinity','specifiedWeaponBoost','allMartialArtsBoost','bossDamage','mysticDamage','skillAttunement'];

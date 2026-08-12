@@ -9,13 +9,66 @@ globalThis.WWMPatchCore = (() => {
     const normalized=config?.schemaVersion===3 ? clone(config) : clone(globalThis.WWM_DEFAULT_CONFIG);
     if (!Number.isFinite(normalized.levels.relayMultiplier)) normalized.levels.relayMultiplier=0.94;
     if (!normalized.levels.supportedAppVersion) normalized.levels.supportedAppVersion=globalThis.WWM_DEFAULT_CONFIG.levels.supportedAppVersion;
+    if (!normalized.levels.playerProfiles?.[normalized.levels.recommendedPlayerProfile]) normalized.levels.recommendedPlayerProfile=normalized.levels.defaultPlayerProfile||Object.keys(normalized.levels.playerProfiles||{})[0]||null;
+    if (!normalized.levels.enemyLevels?.[normalized.levels.recommendedEnemyLevel]) normalized.levels.recommendedEnemyLevel=Object.keys(normalized.levels.enemyLevels||{})[0]||null;
     delete normalized.levels.playerProfiles?.['original-100'];
     if(!normalized.levels.arsenalTables)normalized.levels.arsenalTables=clone(globalThis.WWM_DEFAULT_CONFIG.levels.arsenalTables);
     for(const table of Object.values(normalized.levels.arsenalTables||{})){
       if(table.stonesplit||table.general){table.minAttack=table.stonesplit?.minStonesplit??table.general?.minPhys??0;table.maxAttack=table.stonesplit?.maxStonesplit??table.general?.maxPhys??0;delete table.stonesplit;delete table.general;}
       delete table.maxHp;
     }
-    for(const [id,profile] of Object.entries(normalized.levels.playerProfiles||{}))if(!Object.hasOwn(profile,'arsenalTable'))profile.arsenalTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.arsenalTable??null;
+    for(const [id,profile] of Object.entries(normalized.levels.playerProfiles||{})){
+      if(!Object.hasOwn(profile,'arsenalTable'))profile.arsenalTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.arsenalTable??null;
+      if(!profile.foodBonus)profile.foodBonus=clone(globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.foodBonus||{minPhys:120,maxPhys:240});
+    }
+    if(!normalized.baseCharacterStats)normalized.baseCharacterStats=clone(globalThis.WWM_DEFAULT_CONFIG.baseCharacterStats);
+    for(const [id,profile] of Object.entries(normalized.levels.playerProfiles||{}))if(!Object.hasOwn(profile,'characterTable'))profile.characterTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.characterTable??null;
+    const legacyLayersMissing=!normalized.oddityTalentStats&&!normalized.martialArtsTalents;
+    if(legacyLayersMissing){
+      const legacy=normalized.baseCharacterStats?.['level-100-fixed'];
+      const supplied=globalThis.WWM_DEFAULT_CONFIG.baseCharacterStats['level-100-fixed'];
+      const oldSupplied=legacy&&legacy.minPhys===595.68&&legacy.maxPhys===947.34&&legacy.minPrimaryAttribute===274&&legacy.maxPrimaryAttribute===549;
+      if(oldSupplied)normalized.baseCharacterStats['level-100-fixed']=clone(supplied);
+      else if(legacy){
+        const deltas={power:3,agility:3,momentum:3,body:3,defense:3,minPhys:44,maxPhys:273.9,minPrimaryAttribute:53.8,maxPrimaryAttribute:108.8,precision:0.015,crit:0.04,affinity:0.02,attrDmgBonus:0.02};
+        for(const [key,value] of Object.entries(deltas))legacy[key]=(Number(legacy[key])||0)-value;
+      }
+    }
+    if(!normalized.oddityTalentStats)normalized.oddityTalentStats=clone(globalThis.WWM_DEFAULT_CONFIG.oddityTalentStats);
+    if(!normalized.martialArtsTalents)normalized.martialArtsTalents=clone(globalThis.WWM_DEFAULT_CONFIG.martialArtsTalents);
+    const oldProgression=normalized.oddityTalentStats?.['level-100-complete']?.entries?.find(entry=>entry.name==='Level 100 progression and general talents (reconciled)');
+    if(oldProgression){
+      const base=normalized.baseCharacterStats?.['level-100-fixed'];
+      if(base){
+        const shifts={power:13,agility:13,momentum:13,body:13,defense:13,minPhys:33.53888,maxPhys:54.06936,precision:0.013,crit:-0.06439728,affinity:-0.00008};
+        for(const [key,value] of Object.entries(shifts))base[key]=(Number(base[key])||0)+value;
+      }
+      oldProgression.name='Normal Talent Tree - Breakthrough 16 New Nodes';
+      oldProgression.bonuses={power:3,agility:3,momentum:3,body:3,defense:3,precision:0.015,crit:0.04,affinity:0.02};
+    }
+    const level100Bonuses=normalized.oddityTalentStats?.['level-100-complete'];
+    if(level100Bonuses){
+      level100Bonuses.label='Level 100 - Completed progression and oddities';
+      const normalTalent=level100Bonuses.entries?.find(entry=>entry.name==='Normal Talent Tree — confirmed combat bonuses');
+      if(normalTalent)normalTalent.name='Normal Talent Tree - Breakthrough 16 New Nodes';
+      const oddities=(level100Bonuses.entries||[]).filter(entry=>/Oddities$/i.test(entry.name||''));
+      if(!normalized.oddityTalentStats['completed-oddities'])normalized.oddityTalentStats['completed-oddities']={label:'Completed Oddities - All Player Levels',levelIndependent:true,entries:oddities.length?clone(oddities):clone(globalThis.WWM_DEFAULT_CONFIG.oddityTalentStats['completed-oddities'].entries)};
+      level100Bonuses.entries=(level100Bonuses.entries||[]).filter(entry=>!/Oddities$/i.test(entry.name||''));
+    }
+    const globalOddities=normalized.oddityTalentStats?.['completed-oddities'];
+    if(globalOddities){globalOddities.label='Completed Oddities - All Player Levels';globalOddities.levelIndependent=true;}
+    const stonesplitTalents=normalized.martialArtsTalents?.['stonesplit-complete'];
+    if(stonesplitTalents)stonesplitTalents.label='Stonesplit Might Martial Arts Talents';
+    if(stonesplitTalents&&!stonesplitTalents.entries?.some(entry=>entry.name==='Charge Calculation Enhancement')){
+      const base=normalized.baseCharacterStats?.['level-100-fixed'];
+      if(base)base.maxPhys=(Number(base.maxPhys)||0)-120;
+      stonesplitTalents.entries??=[];
+      stonesplitTalents.entries.unshift({name:'Charge Calculation Enhancement',enabled:true,bonuses:{maxPhys:120}});
+    }
+    for(const [id,profile] of Object.entries(normalized.levels.playerProfiles||{})){
+      if(!Object.hasOwn(profile,'oddityTalentTable'))profile.oddityTalentTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.oddityTalentTable??null;
+      if(!Object.hasOwn(profile,'martialArtsTalentTable'))profile.martialArtsTalentTable=globalThis.WWM_DEFAULT_CONFIG.levels.playerProfiles[id]?.martialArtsTalentTable??null;
+    }
     for (const [id,table] of Object.entries(normalized.skillCoefficients||{})) for (const rule of table.coefficientRules||[]) {
       const supplied=globalThis.WWM_DEFAULT_CONFIG.skillCoefficients[id]?.coefficientRules?.find(x=>x.name===rule.name)?.gameplay;
       if (!rule.gameplay || Object.values(rule.gameplay).every(value=>value==='')) rule.gameplay=clone(supplied||{hitCount:'',timingSeconds:'',notes:''});
@@ -153,6 +206,68 @@ globalThis.WWMPatchCore = (() => {
     return source.replace(pattern,(_match,left,_variable,middle)=>`${left}${min}${middle}${max}`);
   }
 
+  function patchBaseCharacterStats(source, config, selectedProfile) {
+    if(!selectedProfile?.characterTable)return source;
+    const base=config.baseCharacterStats?.[selectedProfile.characterTable];
+    if(!base)throw new Error(`Missing base character table: ${selectedProfile.characterTable}`);
+    const stats=clone(base);
+    const applyTable=(collection,id)=>{
+      if(!id)return;
+      const table=collection?.[id];
+      if(!table)throw new Error(`Missing character bonus table: ${id}`);
+      for(const entry of table.entries||[])if(entry.enabled!==false)for(const [key,value] of Object.entries(entry.bonuses||{}))if(Number.isFinite(value))stats[key]=(Number(stats[key])||0)+value;
+    };
+    for(const [id,table] of Object.entries(config.oddityTalentStats||{}))if(table.levelIndependent)applyTable(config.oddityTalentStats,id);
+    if(!config.oddityTalentStats?.[selectedProfile.oddityTalentTable]?.levelIndependent)applyTable(config.oddityTalentStats,selectedProfile.oddityTalentTable);
+    applyTable(config.martialArtsTalents,selectedProfile.martialArtsTalentTable);
+    for(const key of Object.keys(stats))if(Number.isFinite(stats[key]))stats[key]=Number(stats[key].toFixed(10));
+    const start=source.indexOf("bu={'power':0x89");
+    const end=start<0?-1:source.indexOf('},ag=[',start);
+    if(start<0||end<0)throw new Error('Base character stats table was not found.');
+    let part=source.slice(start,end+1);
+    const replaceOne=(pattern,replacement,label)=>{const matches=[...part.matchAll(new RegExp(pattern.source,pattern.flags.includes('g')?pattern.flags:pattern.flags+'g'))];if(matches.length!==1)throw new Error(`${label}: found ${matches.length}, expected 1`);part=part.replace(pattern,replacement);};
+    const wholeKeys=['power','agility','momentum','directCrit','directAffinity','critDmgBonus','affinityDmgBonus','physPen','attrDmgBonus','physDmgBonus','allWeaponDmg','bossDmg','lightAtkDmg','heavyAtkDmg','executionDmg','stMysticDmg','stControlMysticDmg','stBurstMysticDmg','areaMysticDmg','minSilkbind','maxSilkbind','minBellstrike','maxBellstrike','minStonesplit','maxStonesplit','minBamboocut','maxBamboocut','maxHp','physDef','body','defense'];
+    for(const key of wholeKeys){
+      const value=stats[key];
+      if(Number.isFinite(value))replaceOne(new RegExp(`('${key}':)([^,}]+)`),`$1${value}`,`Base ${key}`);
+    }
+    replaceOne(/('minPhys':)[\s\S]*?(?=\+zr\()/,`$1${stats.minPhys}`,'Base minPhys');
+    replaceOne(/('maxPhys':)[\s\S]*?(?=\+zr\()/,`$1${stats.maxPhys}`,'Base maxPhys');
+    replaceOne(/('_minPrimaryAttr':)([^,}]+)/,`$1${stats.minPrimaryAttribute}`,'Base min primary attribute');
+    replaceOne(/('_maxPrimaryAttr':)([^,}]+)/,`$1${stats.maxPrimaryAttribute}`,'Base max primary attribute');
+    for(const key of ['precision','crit','affinity'])replaceOne(new RegExp(`('${key}':)[\\s\\S]*?(?=\\+zr\\()`),`$1${stats[key]}`,`Base ${key}`);
+    if(Number.isFinite(stats.stonesplitPen)){
+      const existing=/'stonesplitPen':([^,}]+)/;
+      if(existing.test(part))replaceOne(/('stonesplitPen':)([^,}]+)/,`$1${stats.stonesplitPen}`,'Base stonesplitPen');
+      else part=part.replace(/('maxStonesplit':[^,}]+)/,`$1,'stonesplitPen':${stats.stonesplitPen}`);
+    }
+    let patched=source.slice(0,start)+part+source.slice(end+1);
+    const functionStart=patched.indexOf('function ',end);
+    const bodyMarker=functionStart<0?-1:patched.indexOf('){',functionStart);
+    const braceStart=bodyMarker<0?-1:bodyMarker+1;
+    if(braceStart<0)throw new Error('Character-stat calculation function was not found.');
+    let depth=0,functionEnd=-1,quote=null,escape=false;
+    for(let i=braceStart;i<patched.length;i++){const char=patched[i];if(quote){if(escape)escape=false;else if(char==='\\')escape=true;else if(char===quote)quote=null;continue;}if(char==="'"||char==='"'||char==='`'){quote=char;continue;}if(char==='{')depth++;else if(char==='}'&&--depth===0){functionEnd=i+1;break;}}
+    if(functionEnd<0)throw new Error('Character-stat calculation function is incomplete.');
+    let calculation=patched.slice(functionStart,functionEnd);
+    const finalReturn=/return\s+([\w$]+);}$/.exec(calculation);
+    if(!finalReturn)throw new Error('Character-stat calculation return was not found.');
+    const result=finalReturn[1];
+    calculation=calculation.slice(0,finalReturn.index)+`for(const _wwmAttribute of ['power','agility','momentum','body','defense'])if(Number.isFinite(${result}[_wwmAttribute]))${result}[_wwmAttribute]=Math.round(${result}[_wwmAttribute]);return ${result};}`;
+    return patched.slice(0,functionStart)+calculation+patched.slice(functionEnd);
+  }
+
+  function patchFoodBonus(source, selectedProfile) {
+    const food=selectedProfile?.foodBonus;
+    if(!food)return source;
+    const min=Number(food.minPhys),max=Number(food.maxPhys);
+    if(!Number.isFinite(min)||!Number.isFinite(max))throw new Error('Player-profile food bonus needs numeric minPhys and maxPhys values.');
+    const pattern=/(const\s+([\w$]+)=\{\};\2\[[^\]]+\]=)0x78(,\2\[[^\]]+\]=)0xf0(?=;const\s+[\w$]+=\{\};[\s\S]{0,220}\['96'\]=\2;)/g;
+    const matches=[...source.matchAll(pattern)];
+    if(matches.length!==1)throw new Error(`Food bonus table: found ${matches.length}, expected 1`);
+    return source.replace(pattern,`$1${min}$3${max}`);
+  }
+
   function objectRanges(source, marker) {
     const ranges=[]; let search=0;
     while((search=source.indexOf(marker,search))>=0){let start=search+marker.length-1,depth=0,quote=null,escape=false,end=-1;for(let i=start;i<source.length;i++){const char=source[i];if(quote){if(escape)escape=false;else if(char==='\\')escape=true;else if(char===quote)quote=null;continue;}if(char==="'"||char==='"'){quote=char;continue;}if(char==='{')depth++;else if(char==='}'&&--depth===0){end=i+1;break;}}if(end<0)break;ranges.push([search,end]);search=end;}
@@ -248,7 +363,7 @@ globalThis.WWMPatchCore = (() => {
 
   function patchApp(source, config, profileId) {
     const selected = profile(config, profileId).data;
-    return patchGearAttuneLevel(patchTuning(patchArsenal(patchArmorSets(patchBowSet(patchEnemyLevels(patchGear(source, config), config),config),config),config,selected), config, selected));
+    return patchGearAttuneLevel(patchTuning(patchBaseCharacterStats(patchArsenal(patchArmorSets(patchBowSet(patchEnemyLevels(patchGear(patchFoodBonus(source,selected), config), config),config),config),config,selected),config,selected), config, selected));
   }
 
   return { normalize, profile, patchApp, patchWorker };

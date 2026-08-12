@@ -49,9 +49,18 @@ globalThis.WWM_DEFAULT_CONFIG = {
   levels: {
     relayMultiplier: 0.94,
     supportedAppVersion: '5faff436',
+    recommendedPlayerProfile: 'fixed-100',
+    recommendedEnemyLevel: '96',
     defaultPlayerProfile: 'fixed-100',
     playerProfiles: {
-      'fixed-100': { label: 'Lv.100 (Fixed)', level: 100, tuningTable: 'level-100-fixed', coefficientTable: 'stonesplit-100', arsenalTable: 'level-100' }
+      'fixed-100': {
+        label: 'Lv.100 (Fixed)', level: 100,
+        characterTable: 'level-100-fixed',
+        oddityTalentTable: 'level-100-complete',
+        martialArtsTalentTable: 'stonesplit-complete',
+        tuningTable: 'level-100-fixed', coefficientTable: 'stonesplit-100', arsenalTable: 'level-100',
+        foodBonus: { minPhys: 120, maxPhys: 240 }
+      }
     },
     arsenalTables: {
       'level-100': {
@@ -61,6 +70,80 @@ globalThis.WWM_DEFAULT_CONFIG = {
     },
     enemyLevels: {
       '96': { label: 'Lv.96 (Def: 405, JR: 65%)', level: 96, defense: 405, resistance: 0.65 }
+    }
+  },
+  baseCharacterStats: {
+    'level-100-fixed': {
+      power: 150,
+      agility: 150,
+      momentum: 150,
+      body: 150,
+      defense: 150,
+      minPhys: 629.21888,
+      maxPhys: 881.40936,
+      minPrimaryAttribute: 274,
+      maxPrimaryAttribute: 549,
+      precision: 0.953,
+      crit: 0.23404272,
+      affinity: 0.14914,
+      directCrit: 0,
+      directAffinity: 0,
+      critDmgBonus: 0.5,
+      affinityDmgBonus: 0.35,
+      physPen: 0,
+      attrDmgBonus: 0,
+      physDmgBonus: 0,
+      allWeaponDmg: 0,
+      bossDmg: 0,
+      lightAtkDmg: 0,
+      heavyAtkDmg: 0,
+      executionDmg: 0,
+      stMysticDmg: 0,
+      stControlMysticDmg: 0,
+      stBurstMysticDmg: 0,
+      areaMysticDmg: 0,
+      minSilkbind: 0,
+      maxSilkbind: 0,
+      minBellstrike: 0,
+      maxBellstrike: 0,
+      minStonesplit: 0,
+      maxStonesplit: 0,
+      stonesplitPen: 0,
+      minBamboocut: 0,
+      maxBamboocut: 0,
+      maxHp: 76454,
+      physDef: 22.7
+    }
+  },
+  oddityTalentStats: {
+    'completed-oddities': {
+      label: 'Completed Oddities - All Player Levels',
+      levelIndependent: true,
+      entries: [
+        { name: 'Qinghe Oddities', enabled: true, bonuses: { minPhys: 8, maxPhys: 16 } },
+        { name: 'Kaifeng Oddities', enabled: true, bonuses: { minPhys: 16, maxPhys: 24 } },
+        { name: 'Hexi Oddities', enabled: true, bonuses: { minPhys: 8, maxPhys: 16 } },
+        { name: 'Kaifeng Palace Oddities', enabled: true, bonuses: { minPhys: 4, maxPhys: 8 } },
+        { name: 'Hidden Mountain: Suixiang Oddities', enabled: true, bonuses: { minPhys: 8, maxPhys: 16 } }
+      ]
+    },
+    'level-100-complete': {
+      label: 'Level 100 - Completed progression and oddities',
+      entries: [
+        { name: 'Normal Talent Tree - Breakthrough 16 New Nodes', enabled: true, bonuses: { power: 3, agility: 3, momentum: 3, body: 3, defense: 3, precision: 0.015, crit: 0.04, affinity: 0.02 } }
+      ]
+    }
+  },
+  martialArtsTalents: {
+    'stonesplit-complete': {
+      label: 'Stonesplit Might Martial Arts Talents',
+      entries: [
+        { name: 'Charge Calculation Enhancement', enabled: true, bonuses: { maxPhys: 120 } },
+        { name: 'Physical Attack UP', enabled: true, bonuses: { maxPhys: 73.9 } },
+        { name: 'Stonesplit Attribute UP — Attack', enabled: true, bonuses: { minPrimaryAttribute: 53.8, maxPrimaryAttribute: 108.8 } },
+        { name: 'Stonesplit Attribute UP — Penetration', enabled: true, bonuses: { stonesplitPen: 4 } },
+        { name: 'Stonesplit Attribute DMG Bonus', enabled: true, bonuses: { attrDmgBonus: 0.02 } }
+      ]
     }
   },
   baseTuningStats: {

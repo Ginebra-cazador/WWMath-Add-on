@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "latest": {
     "firefox": {
-      "version": "3.3.17",
+      "version": "3.4.0",
       "releaseUrl": "https://github.com/Ginebra-cazador/WWMath-Add-on/releases/latest"
     },
     "chrome": {
-      "version": "2.3.17",
+      "version": "2.4.0",
       "releaseUrl": "https://github.com/Ginebra-cazador/WWMath-Add-on/releases/latest"
     }
   }
