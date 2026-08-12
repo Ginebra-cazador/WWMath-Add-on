@@ -11,8 +11,8 @@ Once per day, the extension may read the repository's static `update.json` file 
 Use the ZIP files attached to the latest entry on the repository's **[Releases](https://github.com/Ginebra-cazador/WWMath-Add-on/releases)** page:
 
 
-- `Unofficial-WWM-Patch-Firefox-v3.3.17.zip`
-- `Unofficial-WWM-Patch-Chrome-v2.3.17.zip`
+- `Unofficial-WWM-Patch-Firefox-v3.4.0.zip`
+- `Unofficial-WWM-Patch-Chrome-v2.4.0.zip`
 
 The `firefox/` and `chrome/` folders contain the matching readable source code.
 
@@ -46,13 +46,12 @@ Make sure the Patch is active on Chrome, on Firefox it is active once the Add-on
 On Chrome, just click on the Red button and it should turn to green as shown on the Picture, *IF it doesn't. Check Troubleshooting bellow*.
 <img width="735" height="837" alt="image" src="https://github.com/user-attachments/assets/0dd762b8-9750-4bae-a59d-53d24144b5c7" />
 
-
 After activation, import your profile, then open the calculator website's **Settings** tab (next to **Profile**). Use **Player Level** and **Enemy Level** there to change the levels used by the live calculation. Enable **Show other enemy levels** when you need to select an enemy level other than the website's default.
 <img width="1404" height="837" alt="image" src="https://github.com/user-attachments/assets/9878beed-f516-4ac3-b522-0eab589cd2a6" />
 
+For a new installation, press **Apply Recommended Levels** above **WWM Patch Settings** to select the configured recommended Player Profile and Enemy Level in one step. You can edit that recommended pair in Patch Settings without preventing later changes through the website's own level menus.
 
-
-Choose **Lv.100 (Fixed)** or any custom under **Player Level** to use the verified Stonesplit coefficients and the confirmed 6% cap (3.6%-6% range) for every skill entry marked `(attune)`. The website's native **Lv.100** option preserves the calculator developer's original data. These live selections belong to the website's Settings page; Patch Settings is used to edit or add the data tables that supply those choices.
+Choose **Lv.100 (Fixed)** or any custom level under **Player Level** to use its patched data, including the verified Stonesplit coefficients and the confirmed 6% cap (3.6%-6% range) for every skill entry marked `(attune)`. The website's native **Lv.100** option preserves the calculator developer's original data. These live selections belong to the website's Settings page; Patch Settings is used to edit or add the data tables that supply those choices.
 
 Level 96 gear remains available. For a Legendary Level 96 weapon, the base line should display `Min Phys +65, Max Phys +151`, and those base values should contribute to Character Stats and DPS.
 
@@ -60,7 +59,8 @@ To edit values or prepare a future gear level:
 
 1. Open the extension's **Options** page. In Chrome, clicking **WWM Patch: ON** also opens it.
 2. Use **User-friendly mode** to expand compact level, gear, and coefficient rows and edit labeled values. Guided buttons can add player profiles, enemy levels, tuning tables, coefficient tables, and coefficient rules. Use **Advanced JSON mode** for unrestricted structural edits.
-3. Choose one of the four sections: **Player & enemy levels**, **Base tuning stats**, **Skill coefficients**, or **Base gear stats**.
+   In **Oddities & Player Talents**, the creation tasks are separated: **Add Player Level Talent List** creates another level-specific post-Breakthrough list, **Map New Oddity** adds a level-independent Oddity, and **Add Bonus to Mapped Entry** adds a selected stat to an existing Oddity or talent.
+3. Choose the relevant section. **Base character stats** contains non-optional progression. **Oddities & general talents** separates level-independent Oddities from post-Breakthrough Player Talents, while **Martial Arts talents** contains selectable Martial Arts bonuses whose conditions are assumed to be fully met. Player profiles link the level-specific tables automatically; Oddities apply to every patched player level. Each Player Profile also carries its own **Food Bonus** Min Phys and Max Phys values; the website's existing **Use Food Bonus** checkbox decides whether those values are applied.
 4. Save the configuration.
 5. Close and reopen, or reload, the calculator.
 
@@ -74,6 +74,8 @@ To add a future player level such as 105, add a profile under `levels.playerProf
 - Configurable Stonesplit Might skill coefficients.
 - Separate original and corrected Level 100 player profiles.
 - Configurable player levels, enemy defense, and enemy resistance.
+- Separate base character, Oddities/general-talent, and Martial Arts-talent tables so selectable character bonuses no longer need manual stat overrides.
+- Confirmed Stonesplit Martial Arts talent bonuses, including the fulfilled +120 Max Physical Attack from Charge Calculation Enhancement and +4 Stonesplit Penetration.
 - Corrected 6% maximum for all skill entries labeled `(attune)` in fixed mode.
 - Local JSON editor with validation and reset support.
 - User-friendly Martial Arts Skill Data combining damage replacements with timing, hit-count, and notes fields.

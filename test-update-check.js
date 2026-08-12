@@ -25,7 +25,7 @@ async function run(browserName, installedVersion, latestVersion, expectedAvailab
 
 Promise.all([
   run('firefox', '3.3.16', '3.3.16', false),
-  run('firefox', '3.3.16', '3.3.17', true),
+  run('firefox', '3.3.17', '3.4.0', true),
   run('chrome', '2.3.16', '2.4.0', true),
   run('chrome', '2.3.16', '2.3.15', false)
 ]).then(() => console.log('Update checker tests passed.'));

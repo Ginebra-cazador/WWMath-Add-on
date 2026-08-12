@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Unofficial WWM Calculator Data Patch",
-  "version": "3.3.17",
+  "version": "3.4.0",
   "description": "Locally updates configurable levels, gear, tuning, and Martial Arts data on the Where Winds Math calculator.",
   "icons": {
     "16": "icons/icon-16.png",
@@ -29,6 +29,15 @@
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true
+  },
+  "browser_action": {
+    "default_title": "Open WWM Patch Settings",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    }
   },
   "browser_specific_settings": {
     "gecko": {

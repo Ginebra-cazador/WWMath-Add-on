@@ -2,12 +2,15 @@
 
 const ext = globalThis.browser || globalThis.chrome;
 let config = globalThis.WWM_DEFAULT_CONFIG;
-let runtime = { playerProfile: null };
+let runtime = { playerProfile: null, enemyLevel: null };
 let restoring = false;
 let pendingGearLevel = null;
 let pendingGearUntil = 0;
 let compatibility = null;
 let gearLevelMemory = {};
+let recommendedButton = null;
+let updateLink = null;
+let applyingRecommendedLevels = false;
 const attemptedEnemySynchronizations = new Set();
 try { gearLevelMemory=JSON.parse(sessionStorage.getItem('wwmGearLevelMemory')||'{}'); } catch (_) {}
 
@@ -44,6 +47,23 @@ function isPlayerSelect(select) {
 
 function isEnemySelect(select) {
   return rowLabel(select).includes('enemy level') || [...select.options].some(x => /def:|jr:/i.test(x.textContent));
+}
+
+function recommendedLevelsAreSelected() {
+  const profileId = config.levels.recommendedPlayerProfile || config.levels.defaultPlayerProfile || Object.keys(config.levels.playerProfiles || {})[0];
+  const enemyId = config.levels.recommendedEnemyLevel || Object.keys(config.levels.enemyLevels || {})[0];
+  const enemy = config.levels.enemyLevels?.[enemyId];
+  const visibleEnemySelect = [...document.querySelectorAll('select')].find(isEnemySelect);
+  const currentEnemyLevel = visibleEnemySelect?.value || runtime.enemyLevel;
+  return Boolean(profileId && enemy && runtime.playerProfile === profileId && Number(currentEnemyLevel) === Number(enemy.level));
+}
+
+function updateRecommendedButtonVisibility() {
+  if (!recommendedButton) return;
+  const selected = recommendedLevelsAreSelected();
+  const visible = applyingRecommendedLevels || !selected;
+  recommendedButton.style.display = visible ? 'block' : 'none';
+  if (updateLink) updateLink.style.bottom = visible ? '96px' : '54px';
 }
 
 function synchronizeEnemySelect(select) {
@@ -89,6 +109,7 @@ function expose(root = document) {
       setTimeout(() => synchronizeEnemySelect(select), 500);
     }
   }
+  updateRecommendedButtonVisibility();
 }
 
 document.addEventListener('change', async event => {
@@ -99,6 +120,12 @@ document.addEventListener('change', async event => {
     pendingGearUntil = Date.now() + 2500;
     rememberGearLevel(select,select.value);
     setTimeout(() => expose(), 0);
+    return;
+  }
+  if (isEnemySelect(select) && !restoring) {
+    runtime = { ...runtime, enemyLevel: Number(select.value) || null };
+    await ext.storage.local.set({ wwmRuntime: runtime });
+    updateRecommendedButtonVisibility();
     return;
   }
   if (!isPlayerSelect(select) || restoring) return;
@@ -127,7 +154,7 @@ document.addEventListener('change', async event => {
 
 ext.storage.local.get(['wwmConfig','wwmRuntime','wwmCompatibility']).then(result => {
   if (result.wwmConfig?.schemaVersion === 3) config = result.wwmConfig;
-  runtime = result.wwmRuntime || { playerProfile: null };
+  runtime = result.wwmRuntime || { playerProfile: null, enemyLevel: null };
   compatibility = result.wwmCompatibility || null;
   expose();
   renderCompatibility();
@@ -135,19 +162,128 @@ ext.storage.local.get(['wwmConfig','wwmRuntime','wwmCompatibility']).then(result
 
 new MutationObserver(mutations => mutations.forEach(x => { expose(x.target); [...x.addedNodes].forEach(expose); })).observe(document.body, { childList: true, subtree: true });
 
+const wait = milliseconds => new Promise(resolve => setTimeout(resolve,milliseconds));
+function openWebsiteSettings() {
+  const candidate=[...document.querySelectorAll('[role="tab"],button,a,[data-tab]')].find(element=>{
+    const text=(element.textContent||'').trim();
+    return element.getAttribute('aria-controls')==='tab-panel-settings' ||
+      element.dataset?.tab==='settings' ||
+      (!/wwm\s+patch/i.test(text) && /settings$/i.test(text));
+  });
+  candidate?.click();
+  return Boolean(candidate);
+}
+function findShowOtherEnemyLevelsCheckbox() {
+  return [...document.querySelectorAll('input[type="checkbox"]')].find(checkbox => {
+    let container = checkbox.parentElement;
+    for (let depth = 0; container && depth < 6; depth++, container = container.parentElement) {
+      if (/show other enemy levels/i.test(container.textContent || '') && container.querySelectorAll('input[type="checkbox"]').length === 1) return true;
+    }
+    return false;
+  });
+}
+async function enableOtherEnemyLevels() {
+  let checkbox = null;
+  for (const pause of [0,100,250,500,900]) {
+    await wait(pause);
+    checkbox = findShowOtherEnemyLevelsCheckbox();
+    if (checkbox) break;
+  }
+  if (!checkbox) return false;
+  if (!checkbox.checked) checkbox.click();
+  for (const pause of [100,250,500,900]) {
+    await wait(pause);
+    expose();
+    const enemySelect = [...document.querySelectorAll('select')].find(select => isEnemySelect(select) && !select.disabled && select.getAttribute('aria-disabled') !== 'true');
+    if (enemySelect) return true;
+  }
+  return false;
+}
+function recommendedApplyFailed(message) {
+  applyingRecommendedLevels=false;
+  recommendedButton.disabled=false;
+  recommendedButton.textContent=message;
+  setTimeout(() => {
+    recommendedButton.textContent='Apply Recommended Levels';
+    updateRecommendedButtonVisibility();
+  },2500);
+}
+async function applyRecommendedLevels() {
+  const profileId=config.levels.recommendedPlayerProfile||config.levels.defaultPlayerProfile||Object.keys(config.levels.playerProfiles||{})[0];
+  const enemyId=config.levels.recommendedEnemyLevel||Object.keys(config.levels.enemyLevels||{})[0];
+  const selectedProfile=config.levels.playerProfiles?.[profileId];
+  const selectedEnemy=config.levels.enemyLevels?.[enemyId];
+  if(!selectedProfile||!selectedEnemy)return alert('Choose valid Recommended Player Profile and Recommended Enemy Level values in WWM Patch Settings.');
+  applyingRecommendedLevels=true;
+  recommendedButton.disabled=true;
+  recommendedButton.textContent='Applying Recommended Levels...';
+  openWebsiteSettings();
+  let playerSelect=null;
+  for(const pause of [0,100,250,500,900]){
+    await wait(pause);
+    expose();
+    const selects=[...document.querySelectorAll('select')];
+    playerSelect=selects.find(isPlayerSelect)||playerSelect;
+    if(playerSelect&&findShowOtherEnemyLevelsCheckbox())break;
+  }
+  if(!playerSelect){
+    return recommendedApplyFailed('Calculator Settings unavailable');
+  }
+  if(!await enableOtherEnemyLevels()) return recommendedApplyFailed('Enemy levels unavailable');
+  playerSelect=[...document.querySelectorAll('select')].find(isPlayerSelect)||playerSelect;
+  restoring=true;
+  if(![...playerSelect.options].some(option=>option.value===String(selectedProfile.level))){
+    const bridge=addOption(playerSelect,String(selectedProfile.level),`Lv.${selectedProfile.level}`); bridge.hidden=true;
+  }
+  playerSelect.value=String(selectedProfile.level);
+  playerSelect.dispatchEvent(new Event('change',{bubbles:true}));
+  restoring=false;
+  await wait(250);
+  let enemySelect=null;
+  for(const pause of [0,100,250,500,900]){
+    await wait(pause);
+    expose();
+    enemySelect=[...document.querySelectorAll('select')].find(select=>isEnemySelect(select)&&!select.disabled&&select.getAttribute('aria-disabled')!=='true');
+    if(enemySelect)break;
+  }
+  if(!enemySelect){
+    return recommendedApplyFailed('Enemy levels unavailable');
+  }
+  addOption(enemySelect,String(selectedEnemy.level),selectedEnemy.label);
+  enemySelect.value=String(selectedEnemy.level);
+  enemySelect.dispatchEvent(new Event('change',{bubbles:true}));
+  runtime={...runtime,playerProfile:profileId,nativePlayerLevel:null,enemyLevel:Number(selectedEnemy.level)};
+  await ext.storage.local.set({wwmRuntime:runtime});
+  recommendedButton.textContent='Recommended Settings Applied ✓';
+  recommendedButton.style.display='block';
+  recommendedButton.style.opacity='1';
+  await wait(2000);
+  recommendedButton.style.opacity='0';
+  await wait(300);
+  location.reload();
+}
+
 const button = document.createElement('button');
 button.type = 'button';
 button.textContent = 'WWM Patch Settings';
 button.style.cssText = 'position:fixed;right:12px;bottom:12px;z-index:2147483647;padding:8px 12px;border:1px solid #d7a94b;border-radius:7px;background:#17233f;color:#f4d58a;font:12px system-ui;cursor:pointer;box-shadow:0 2px 8px #0008';
 button.addEventListener('click', () => ext.runtime.sendMessage({ type: 'wwm-open-options' }));
 document.body.appendChild(button);
+recommendedButton=document.createElement('button');
+recommendedButton.type='button';
+recommendedButton.textContent='Apply Recommended Levels';
+recommendedButton.title='Apply the recommended Player Profile and Enemy Level configured in WWM Patch Settings.';
+recommendedButton.style.cssText='position:fixed;right:12px;bottom:54px;z-index:2147483647;padding:8px 12px;border:1px solid #55d98b;border-radius:7px;background:#17233f;color:#8ff0b6;font:12px system-ui;cursor:pointer;box-shadow:0 2px 8px #0008;transition:opacity .3s ease';
+recommendedButton.addEventListener('click',applyRecommendedLevels);
+document.body.appendChild(recommendedButton);
 expose();
 
-const updateLink = document.createElement('a');
-updateLink.style.cssText = 'display:none;position:fixed;right:12px;bottom:54px;z-index:2147483647;padding:7px 11px;border:1px solid #55d98b;border-radius:7px;background:#17233f;color:#8ff0b6;font:12px system-ui;text-decoration:none;box-shadow:0 2px 8px #0008';
+updateLink = document.createElement('a');
+updateLink.style.cssText = 'display:none;position:fixed;right:12px;bottom:96px;z-index:2147483647;padding:7px 11px;border:1px solid #55d98b;border-radius:7px;background:#17233f;color:#8ff0b6;font:12px system-ui;text-decoration:none;box-shadow:0 2px 8px #0008';
 updateLink.target = '_blank';
 updateLink.rel = 'noopener noreferrer';
 document.body.appendChild(updateLink);
+updateRecommendedButtonVisibility();
 ext.runtime.sendMessage({ type: 'wwm-check-update' }).then(status => {
   if (!status?.available) return;
   updateLink.textContent = `Update available: v${status.latestVersion}`;

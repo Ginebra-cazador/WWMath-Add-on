@@ -21,6 +21,8 @@ browser.runtime.onMessage.addListener(async message => {
   return undefined;
 });
 
+browser.browserAction.onClicked.addListener(() => browser.runtime.openOptionsPage());
+
 function patchSource(url, source) {
   if (/\/js\/app\.js(?:[?#]|$)/i.test(url)) return WWMPatchCore.patchApp(source, activeConfig, activeProfile);
   if (/\/js\/simulationWorker\.js(?:[?#]|$)/i.test(url)) return WWMPatchCore.patchWorker(source, activeConfig, WWMPatchCore.profile(activeConfig, activeProfile).data);
