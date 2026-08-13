@@ -1,12 +1,17 @@
 # Unofficial WWM Calculator Data Patch
 
-This repository contains the Firefox and Chrome editions of an unofficial, locally operated data patch for the [Where Winds Math calculator](https://wherewindsmath.pages.dev/).
+This repository contains the Firefox and Chrome/OperaGx(Or any Chromium Browser) editions of an unofficial, locally operated data patch for the [Where Winds Math calculator](https://wherewindsmath.pages.dev/).
 
 The extension adds configurable gear levels (currently Level 96) and updated Stonesplit Might skill coefficients. It has no Discord login, subscription check, analytics, advertising, or cloud-sharing service. Configuration stays in the browser's extension-local storage.
 
 Once per day, the extension may read the repository's static `update.json` file from GitHub. When a newer browser-specific version is listed, it displays a link to the GitHub release; installation remains manual.
 
 ## Downloads
+
+Browser App-Stores
+
+* Chrome version is now live on the store [here](https://chromewebstore.google.com/detail/unofficial-wwm-calculator/ofkokollnnmlenhghfdelfcmkkceilke)
+* Firefox version is still Pending for revision.
 
 Use the ZIP files attached to the latest entry on the repository's **[Releases](https://github.com/Ginebra-cazador/WWMath-Add-on/releases)** page:
 
