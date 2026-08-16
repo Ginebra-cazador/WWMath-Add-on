@@ -11,7 +11,7 @@ Once per day, the extension may read the repository's static `update.json` file 
 Browser App-Stores
 
 * Chrome version is now live on the store [here](https://chromewebstore.google.com/detail/unofficial-wwm-calculator/ofkokollnnmlenhghfdelfcmkkceilke)
-* Firefox version is still Pending for revision.
+* Firefox version is now live on the store [here](https://addons.mozilla.org/en-US/firefox/addon/unofficial-wwmath-data-patch/)
 
 Use the ZIP files attached to the latest entry on the repository's **[Releases](https://github.com/Ginebra-cazador/WWMath-Add-on/releases)** page:
 
